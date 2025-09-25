@@ -1,0 +1,12 @@
+# Archivos de compilación
+bin/
+obj/
+
+# Configuración de Visual Studio
+.vs/
+*.user
+*.suo
+
+# Archivos temporales
+*.db
+*.log
