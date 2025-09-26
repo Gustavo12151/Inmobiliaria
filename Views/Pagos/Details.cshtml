@@ -1,0 +1,10 @@
+@model Inmobiliaria.Models.Pago
+
+<h2>Detalles del Pago</h2>
+<p><strong>Contrato:</strong> @Model.ContratoId</p>
+<p><strong>N° Pago:</strong> @Model.NumeroPago</p>
+<p><strong>Fecha:</strong> @Model.FechaPago.ToShortDateString()</p>
+<p><strong>Importe:</strong> $@Model.Importe</p>
+<p><strong>Usuario Creador:</strong> @Model.UsuarioCreador</p>
+<p><strong>Usuario Anulador:</strong> @Model.UsuarioAnulador</p>
+<a asp-action="Index" class="btn btn-secondary">Volver</a>

@@ -1,0 +1,34 @@
+@model Inmobiliaria.Models.Usuario
+@{
+    ViewData["Title"] = "Perfil de Empleado";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<div class="mb-3">
+    <strong>Usuario:</strong> @Model.NombreUsuario <br />
+    <strong>Rol actual:</strong> @Model.Rol <br />
+    @if (!string.IsNullOrEmpty(Model.Avatar))
+    {
+        <img src="@Model.Avatar" width="120" class="img-thumbnail mt-2" />
+    }
+    else
+    {
+        <p class="text-muted">Sin avatar</p>
+    }
+</div>
+
+<form asp-action="CambiarRol" method="post">
+    <input type="hidden" name="id" value="@Model.Id" />
+
+    <div class="form-group mb-3">
+        <label class="form-label">Nuevo rol</label>
+        <select name="nuevoRol" class="form-control">
+            <option value="Empleado" selected>Empleado</option>
+            <option value="Administrador">Administrador</option>
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Cambiar Rol</button>
+    <a asp-action="Empleados" class="btn btn-secondary ms-2">Volver</a>
+</form>

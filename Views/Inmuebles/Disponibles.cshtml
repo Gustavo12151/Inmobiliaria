@@ -1,0 +1,52 @@
+@model List<Inmobiliaria.Models.Inmueble>
+@{
+    ViewData["Title"] = "Inmuebles Disponibles";
+}
+
+<h2>Inmuebles Disponibles</h2>
+
+<form asp-action="FiltrarDisponibles" method="post" class="row g-3 mb-3">
+    <div class="col-auto">
+        <label for="fechaInicio" class="form-label">Fecha Inicio:</label>
+        <input type="date" name="fechaInicio" class="form-control" required />
+    </div>
+    <div class="col-auto">
+        <label for="fechaFin" class="form-label">Fecha Fin:</label>
+        <input type="date" name="fechaFin" class="form-control" required />
+    </div>
+    <div class="col-auto align-self-end">
+        <button type="submit" class="btn btn-primary">Filtrar</button>
+    </div>
+</form>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Dirección</th>
+            <th>Propietario</th>
+            <th>Tipo</th>
+            <th>Ambientes</th>
+            <th>Superficie</th>
+            <th>Precio</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Direccion</td>
+                <td>@item.Propietario.Nombre @item.Propietario.Apellido</td>
+                <td>@item.Tipo.Nombre</td>
+                <td>@item.Ambientes</td>
+                <td>@item.Superficie</td>
+                <td>@item.Precio</td>
+                <td>@item.Estado</td>
+                <td>
+                    <a class="btn btn-info btn-sm" asp-action="Details" asp-route-id="@item.Id">Detalles</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

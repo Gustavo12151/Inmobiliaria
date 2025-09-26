@@ -1,0 +1,25 @@
+@model Inmobiliaria.Models.Propietario
+
+<h2>Editar Propietario</h2>
+
+<form asp-action="Edit" method="post">
+    <input type="hidden" asp-for="Id" />
+    <div class="form-group">
+        <label>DNI</label>
+        <input asp-for="DNI" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Nombre</label>
+        <input asp-for="Nombre" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Apellido</label>
+        <input asp-for="Apellido" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Contacto</label>
+        <input asp-for="Contacto" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-success">Guardar</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>

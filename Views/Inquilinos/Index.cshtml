@@ -1,0 +1,32 @@
+@model IEnumerable<Inmobiliaria.Models.Inquilino>
+
+<h2>Inquilinos</h2>
+<a class="btn btn-primary mb-3" asp-action="Create">Nuevo Inquilino</a>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>DNI</th>
+            <th>Nombre</th>
+            <th>Apellido</th>
+            <th>Contacto</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var i in Model)
+    {
+        <tr>
+            <td>@i.DNI</td>
+            <td>@i.Nombre</td>
+            <td>@i.Apellido</td>
+            <td>@i.Contacto</td>
+            <td>
+                <a asp-action="Details" asp-route-id="@i.Id" class="btn btn-info btn-sm">Detalles</a>
+                <a asp-action="Edit" asp-route-id="@i.Id" class="btn btn-warning btn-sm">Editar</a>
+                <a asp-action="Delete" asp-route-id="@i.Id" class="btn btn-danger btn-sm">Eliminar</a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

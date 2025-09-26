@@ -1,0 +1,18 @@
+@model Inmobiliaria.Models.Inmueble
+@{
+    ViewData["Title"] = "Detalles del Inmueble";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<table class="table table-bordered">
+    <tr><th>Dirección</th><td>@Model.Direccion</td></tr>
+    <tr><th>Ambientes</th><td>@Model.Ambientes</td></tr>
+    <tr><th>Superficie</th><td>@Model.Superficie</td></tr>
+    <tr><th>Estado</th><td>@Model.Estado</td></tr>
+    <tr><th>Precio</th><td>@Model.Precio</td></tr>
+    <tr><th>Propietario</th><td>@Model.Propietario.Nombre @Model.Propietario.Apellido</td></tr>
+    <tr><th>Tipo</th><td>@Model.Tipo.Nombre</td></tr>
+</table>
+
+<a asp-action="Index" class="btn btn-secondary">Volver</a>

@@ -1,0 +1,47 @@
+@model Inmobiliaria.Models.Contrato
+@{
+    ViewData["Title"] = "Crear Contrato";
+}
+
+<h2>Crear Contrato</h2>
+
+<form asp-action="Create" method="post">
+    <div class="mb-3">
+        <label class="form-label">Inquilino</label>
+        <input asp-for="InquilinoId" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Inmueble</label>
+        <select asp-for="InmuebleId" class="form-select">
+            <option value="">-- Seleccione --</option>
+            @foreach (var inmueble in ViewBag.Inmuebles)
+            {
+                <option value="@inmueble.Id">@inmueble.Direccion</option>
+            }
+        </select>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Fecha Inicio</label>
+        <input asp-for="FechaInicio" type="date" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Fecha Fin</label>
+        <input asp-for="FechaFin" type="date" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Monto Mensual</label>
+        <input asp-for="MontoMensual" type="number" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-success">Crear</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger">
+        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+        {
+            <p>@error.ErrorMessage</p>
+        }
+    </div>
+}

@@ -1,0 +1,18 @@
+@model Inmobiliaria.Models.Contrato
+@{
+    ViewData["Title"] = "Detalles del Contrato";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<table class="table table-bordered">
+    <tr><th>Inquilino</th><td>@Model.Inquilino.Nombre @Model.Inquilino.Apellido</td></tr>
+    <tr><th>Inmueble</th><td>@Model.Inmueble.Direccion</td></tr>
+    <tr><th>Fecha Inicio</th><td>@Model.FechaInicio.ToString("yyyy-MM-dd")</td></tr>
+    <tr><th>Fecha Fin</th><td>@Model.FechaFin.ToString("yyyy-MM-dd")</td></tr>
+    <tr><th>Monto Mensual</th><td>@Model.MontoMensual</td></tr>
+    <tr><th>Usuario Creador</th><td>@Model.UsuarioCreador</td></tr>
+    <tr><th>Usuario Terminador</th><td>@Model.UsuarioTerminador</td></tr>
+</table>
+
+<a asp-action="Index" class="btn btn-secondary">Volver</a>

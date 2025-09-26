@@ -1,0 +1,39 @@
+@model IEnumerable<Inmobiliaria.Models.Usuario>
+
+<h2>Usuarios</h2>
+<a class="btn btn-primary mb-3" asp-action="Create">Nuevo Usuario</a>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Usuario</th>
+            <th>Rol</th>
+            <th>Avatar</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var u in Model)
+    {
+        <tr>
+            <td>@u.NombreUsuario</td>
+            <td>@u.Rol</td>
+            <td>
+                @if (!string.IsNullOrEmpty(u.Avatar))
+                {
+                    <img src="@u.Avatar" alt="Avatar" width="40" height="40" />
+                }
+                else
+                {
+                    <span>Sin avatar</span>
+                }
+            </td>
+            <td>
+                <a asp-action="Details" asp-route-id="@u.Id" class="btn btn-info btn-sm">Detalles</a>
+                <a asp-action="Edit" asp-route-id="@u.Id" class="btn btn-warning btn-sm">Editar</a>
+                <a asp-action="Delete" asp-route-id="@u.Id" class="btn btn-danger btn-sm">Eliminar</a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

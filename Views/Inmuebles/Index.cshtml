@@ -1,0 +1,91 @@
+@model List<Inmobiliaria.Models.Inmueble>
+@{
+    ViewData["Title"] = "Inmuebles";
+}
+
+<h2>Inmuebles</h2>
+
+@* Manejo de alertas de éxito (tomado del primer bloque) *@
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">@TempData["Mensaje"]</div>
+}
+
+<div class="mb-3">
+    @* Botón para crear un nuevo inmueble con restricción por rol (tomado de ambos bloques) *@
+    @if (User.IsInRole("Administrador"))
+    {
+        <a asp-action="Create" class="btn btn-primary">Nuevo Inmueble</a>
+    }
+    
+    @* Botón para ver solo los inmuebles disponibles (tomado del segundo bloque) *@
+    <a asp-action="Disponibles" class="btn btn-success">Ver Disponibles</a>
+</div>
+
+<hr />
+
+@* Formulario de filtrado por fechas (tomado del primer bloque) *@
+<h4>Filtrar por Disponibilidad en Rango de Fechas</h4>
+<form method="post" asp-action="NoOcupados" class="mb-4"> @* Cambié a POST para mayor seguridad/convención MVC, asumiendo que el Controller fue ajustado *@
+    <div class="row g-3 align-items-center">
+        <div class="col-sm-4 col-md-3">
+            <label for="inicio" class="form-label">Desde:</label>
+            <input type="date" name="inicio" class="form-control" required />
+        </div>
+        <div class="col-sm-4 col-md-3">
+            <label for="fin" class="form-label">Hasta:</label>
+            <input type="date" name="fin" class="form-control" required />
+        </div>
+        <div class="col-sm-4 col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-secondary w-100">Buscar No Ocupados</button>
+        </div>
+    </div>
+</form>
+
+<hr />
+
+@* Tabla de listado de inmuebles *@
+<table class="table table-striped table-hover"> @* Se mejoran las clases de la tabla *@
+    <thead>
+        <tr>
+            <th>Dirección</th>
+            <th>Tipo</th>
+            <th>Propietario</th>
+            <th>Ambientes</th>
+            <th>Superficie</th>
+            <th>Precio</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model)
+{
+    <tr>
+        <td>@item.Direccion</td>
+        <td>@item.Tipo.Nombre</td> @* Tomado del primer bloque *@
+        <td>@item.Propietario.Nombre @item.Propietario.Apellido</td>
+        <td>@item.Ambientes</td>
+        <td>@item.Superficie</td>
+        <td>@item.Precio</td>
+        <td>@item.Estado</td>
+        <td>
+            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info btn-sm" title="Detalles">
+                <i class="bi bi-info-circle"></i> Detalles
+            </a>
+
+            @* Acciones restringidas a Administradores (tomado del primer bloque) *@
+            @if (User.IsInRole("Administrador"))
+            {
+                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm" title="Editar">
+                    <i class="bi bi-pencil"></i> Editar
+                </a>
+                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger btn-sm" title="Eliminar">
+                    <i class="bi bi-trash"></i> Eliminar
+                </a>
+            }
+        </td>
+    </tr>
+}
+    </tbody>
+</table>
