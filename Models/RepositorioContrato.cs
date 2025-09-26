@@ -29,10 +29,15 @@ namespace Inmobiliaria.Models
                         c.UsuarioCreadorId,
                         uc.NombreUsuario AS CreadorUsuario,
                         c.UsuarioFinalizadorId,
-                        uf.NombreUsuario AS FinalizadorUsuario
+                        uf.NombreUsuario AS FinalizadorUsuario,
+                        i.Direccion AS InmuebleDireccion,
+                        inq.Nombre AS InquilinoNombre,
+                        inq.Apellido AS InquilinoApellido
                     FROM Contratos c
                     INNER JOIN Usuarios uc ON c.UsuarioCreadorId = uc.Id
                     LEFT JOIN Usuarios uf ON c.UsuarioFinalizadorId = uf.Id
+                    INNER JOIN Inmuebles i ON c.InmuebleId = i.Id
+                    INNER JOIN Inquilinos inq ON c.InquilinoId = inq.Id
                 ";
 
                 using (var command = new MySqlCommand(sql, connection))
@@ -61,7 +66,18 @@ namespace Inmobiliaria.Models
                                         Id = reader.GetInt32("UsuarioFinalizadorId"),
                                         NombreUsuario = reader["FinalizadorUsuario"] != DBNull.Value ? reader.GetString("FinalizadorUsuario") : ""
                                     }
-                                    : null
+                                    : null,
+                                Inmueble = new Inmueble
+                                {
+                                    Id = reader.GetInt32("InmuebleId"),
+                                    Direccion = reader.GetString("InmuebleDireccion")
+                                },
+                                Inquilino = new Inquilino
+                                {
+                                    Id = reader.GetInt32("InquilinoId"),
+                                    Nombre = reader.GetString("InquilinoNombre"),
+                                    Apellido = reader.GetString("InquilinoApellido")
+                                }
                             };
 
                             lista.Add(contrato);
@@ -93,10 +109,15 @@ namespace Inmobiliaria.Models
                         c.UsuarioCreadorId,
                         uc.NombreUsuario AS CreadorUsuario,
                         c.UsuarioFinalizadorId,
-                        uf.NombreUsuario AS FinalizadorUsuario
+                        uf.NombreUsuario AS FinalizadorUsuario,
+                        i.Direccion AS InmuebleDireccion,
+                        inq.Nombre AS InquilinoNombre,
+                        inq.Apellido AS InquilinoApellido
                     FROM Contratos c
                     INNER JOIN Usuarios uc ON c.UsuarioCreadorId = uc.Id
                     LEFT JOIN Usuarios uf ON c.UsuarioFinalizadorId = uf.Id
+                    INNER JOIN Inmuebles i ON c.InmuebleId = i.Id
+                    INNER JOIN Inquilinos inq ON c.InquilinoId = inq.Id
                     WHERE c.Id = @id
                 ";
 
@@ -128,7 +149,18 @@ namespace Inmobiliaria.Models
                                         Id = reader.GetInt32("UsuarioFinalizadorId"),
                                         NombreUsuario = reader["FinalizadorUsuario"] != DBNull.Value ? reader.GetString("FinalizadorUsuario") : ""
                                     }
-                                    : null
+                                    : null,
+                                Inmueble = new Inmueble
+                                {
+                                    Id = reader.GetInt32("InmuebleId"),
+                                    Direccion = reader.GetString("InmuebleDireccion")
+                                },
+                                Inquilino = new Inquilino
+                                {
+                                    Id = reader.GetInt32("InquilinoId"),
+                                    Nombre = reader.GetString("InquilinoNombre"),
+                                    Apellido = reader.GetString("InquilinoApellido")
+                                }
                             };
                         }
                     }
@@ -216,7 +248,7 @@ namespace Inmobiliaria.Models
                     command.Parameters.AddWithValue("@fechaInicio", c.FechaInicio);
                     command.Parameters.AddWithValue("@fechaFin", c.FechaFin);
                     command.Parameters.AddWithValue("@monto", c.MontoMensual);
-                    command.Parameters.AddWithValue("@usuarioFinalizadorId", c.UsuarioFinalizadorId?? (object)DBNull.Value);
+                    command.Parameters.AddWithValue("@usuarioFinalizadorId", c.UsuarioFinalizadorId ?? (object)DBNull.Value);
                     command.Parameters.AddWithValue("@id", c.Id);
 
                     connection.Open();
