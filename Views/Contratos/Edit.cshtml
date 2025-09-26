@@ -1,39 +1,53 @@
 @model Inmobiliaria.Models.Contrato
+
 @{
     ViewData["Title"] = "Editar Contrato";
 }
 
-<h2>@ViewData["Title"]</h2>
+<h2>Editar Contrato</h2>
+<hr />
 
 <form asp-action="Edit" method="post">
     <input type="hidden" asp-for="Id" />
 
-    <div class="mb-3">
-        <label class="form-label">Inquilino (ID)</label>
-        <input asp-for="InquilinoId" class="form-control" type="number" />
+    <div class="form-group mb-3">
+        <label for="InquilinoId" class="form-label">Inquilino</label>
+        <select asp-for="InquilinoId" class="form-select" asp-items="@(new SelectList(ViewBag.Inquilinos, "Id", "Nombre", Model.InquilinoId))">
+            <option value="">-- Seleccionar Inquilino --</option>
+        </select>
+        <span asp-validation-for="InquilinoId" class="text-danger"></span>
     </div>
-    <div class="mb-3">
-        <label class="form-label">Inmueble (ID)</label>
-        <input asp-for="InmuebleId" class="form-control" type="number" />
+
+    <div class="form-group mb-3">
+        <label for="InmuebleId" class="form-label">Inmueble</label>
+        <select asp-for="InmuebleId" class="form-select" asp-items="@(new SelectList(ViewBag.Inmuebles, "Id", "Direccion", Model.InmuebleId))">
+            <option value="">-- Seleccionar Inmueble --</option>
+        </select>
+        <span asp-validation-for="InmuebleId" class="text-danger"></span>
     </div>
-    <div class="mb-3">
-        <label class="form-label">Fecha Inicio</label>
+
+    <div class="form-group mb-3">
+        <label asp-for="FechaInicio" class="form-label"></label>
         <input asp-for="FechaInicio" class="form-control" type="date" />
+        <span asp-validation-for="FechaInicio" class="text-danger"></span>
     </div>
-    <div class="mb-3">
-        <label class="form-label">Fecha Fin</label>
+
+    <div class="form-group mb-3">
+        <label asp-for="FechaFin" class="form-label"></label>
         <input asp-for="FechaFin" class="form-control" type="date" />
+        <span asp-validation-for="FechaFin" class="text-danger"></span>
     </div>
-    <div class="mb-3">
-        <label class="form-label">Monto Mensual</label>
+
+    <div class="form-group mb-3">
+        <label asp-for="MontoMensual" class="form-label"></label>
         <input asp-for="MontoMensual" class="form-control" type="number" step="0.01" />
+        <span asp-validation-for="MontoMensual" class="text-danger"></span>
     </div>
-    <input type="hidden" asp-for="UsuarioTerminador" value="@User.Identity.Name" />
-    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+
+    <button type="submit" class="btn btn-success">Guardar Cambios</button>
     <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
 </form>
 
-@if (ViewBag.Error != null)
-{
-    <div class="alert alert-danger mt-2">@ViewBag.Error</div>
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }

@@ -1,49 +1,62 @@
-@model List<Inmobiliaria.Models.Contrato>
+@model IEnumerable<Inmobiliaria.Models.Contrato>
+
 @{
-    ViewData["Title"] = "Contratos";
+    ViewData["Title"] = "Lista de Contratos";
 }
 
-<h2>Contratos</h2>
+<h2>Lista de Contratos</h2>
+<hr />
 
 @if (TempData["Mensaje"] != null)
 {
-    <div class="alert alert-success">@TempData["Mensaje"]</div>
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
 }
 
-<p>
-    <a class="btn btn-primary" asp-action="Create">Crear Contrato</a>
-</p>
-
-<table class="table table-bordered">
-    <thead>
+<table class="table table-striped table-bordered">
+    <thead class="table-dark">
         <tr>
+            <th>ID</th>
             <th>Inquilino</th>
             <th>Inmueble</th>
             <th>Fecha Inicio</th>
             <th>Fecha Fin</th>
             <th>Monto Mensual</th>
             <th>Usuario Creador</th>
-            <th>Usuario Terminador</th>
+            <th>Usuario Finalizador</th>
             <th>Acciones</th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in Model)
+        @foreach (var contrato in Model)
         {
             <tr>
-                <td>@item.Inquilino.Nombre @item.Inquilino.Apellido</td>
-                <td>@item.Inmueble.Direccion</td>
-                <td>@item.FechaInicio.ToShortDateString()</td>
-                <td>@item.FechaFin.ToShortDateString()</td>
-                <td>@item.MontoMensual</td>
-                <td>@item.UsuarioCreador</td>
-                <td>@item.UsuarioTerminador</td>
+                <td>@contrato.Id</td>
+                <td>@contrato.Inquilino?.Nombre</td>
+                <td>@contrato.Inmueble?.Direccion</td>
+                <td>@contrato.FechaInicio.ToString("dd/MM/yyyy")</td>
+                <td>@contrato.FechaFin.ToString("dd/MM/yyyy")</td>
+                <td>$ @contrato.MontoMensual.ToString("N2")</td>
+                <td>@contrato.UsuarioCreador?.NombreUsuario</td>
                 <td>
-                    <a class="btn btn-info btn-sm" asp-action="Details" asp-route-id="@item.Id">Detalles</a>
-                    <a class="btn btn-warning btn-sm" asp-action="Edit" asp-route-id="@item.Id">Editar</a>
-                    <a class="btn btn-danger btn-sm" asp-action="Delete" asp-route-id="@item.Id">Eliminar</a>
+                    @if (contrato.UsuarioFinalizador != null)
+                    {
+                        @contrato.UsuarioFinalizador.NombreUsuario
+                    }
+                    else
+                    {
+                        <span class="text-muted">No finalizado</span>
+                    }
+                </td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@contrato.Id" class="btn btn-info btn-sm">Ver</a>
+                    <a asp-action="Edit" asp-route-id="@contrato.Id" class="btn btn-warning btn-sm">Editar</a>
+                    <a asp-action="Delete" asp-route-id="@contrato.Id" class="btn btn-danger btn-sm">Eliminar</a>
                 </td>
             </tr>
         }
     </tbody>
 </table>
+
+<a asp-action="Create" class="btn btn-primary">Nuevo Contrato</a>

@@ -1,18 +1,51 @@
 @model Inmobiliaria.Models.Contrato
+
 @{
     ViewData["Title"] = "Detalles del Contrato";
 }
 
-<h2>@ViewData["Title"]</h2>
+<h2>Detalles del Contrato</h2>
+<hr />
 
-<table class="table table-bordered">
-    <tr><th>Inquilino</th><td>@Model.Inquilino.Nombre @Model.Inquilino.Apellido</td></tr>
-    <tr><th>Inmueble</th><td>@Model.Inmueble.Direccion</td></tr>
-    <tr><th>Fecha Inicio</th><td>@Model.FechaInicio.ToString("yyyy-MM-dd")</td></tr>
-    <tr><th>Fecha Fin</th><td>@Model.FechaFin.ToString("yyyy-MM-dd")</td></tr>
-    <tr><th>Monto Mensual</th><td>@Model.MontoMensual</td></tr>
-    <tr><th>Usuario Creador</th><td>@Model.UsuarioCreador</td></tr>
-    <tr><th>Usuario Terminador</th><td>@Model.UsuarioTerminador</td></tr>
-</table>
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Contrato Nº @Model.Id</h5>
 
-<a asp-action="Index" class="btn btn-secondary">Volver</a>
+        <dl class="row">
+            <dt class="col-sm-3">Inquilino</dt>
+            <dd class="col-sm-9">@Model.Inquilino?.Nombre</dd>
+
+            <dt class="col-sm-3">Inmueble</dt>
+            <dd class="col-sm-9">@Model.Inmueble?.Direccion</dd>
+
+            <dt class="col-sm-3">Fecha Inicio</dt>
+            <dd class="col-sm-9">@Model.FechaInicio.ToString("dd/MM/yyyy")</dd>
+
+            <dt class="col-sm-3">Fecha Fin</dt>
+            <dd class="col-sm-9">@Model.FechaFin.ToString("dd/MM/yyyy")</dd>
+
+            <dt class="col-sm-3">Monto Mensual</dt>
+            <dd class="col-sm-9">$ @Model.MontoMensual.ToString("N2")</dd>
+
+            <dt class="col-sm-3">Usuario Creador</dt>
+            <dd class="col-sm-9">@Model.UsuarioCreador?.NombreUsuario</dd>
+
+            <dt class="col-sm-3">Usuario Finalizador</dt>
+            <dd class="col-sm-9">
+                @if (Model.UsuarioFinalizador != null)
+                {
+                    @Model.UsuarioFinalizador.NombreUsuario
+                }
+                else
+                {
+                    <span class="text-muted">No finalizado</span>
+                }
+            </dd>
+        </dl>
+    </div>
+</div>
+
+<div class="mt-3">
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Editar</a>
+    <a asp-action="Index" class="btn btn-secondary">Volver</a>
+</div>

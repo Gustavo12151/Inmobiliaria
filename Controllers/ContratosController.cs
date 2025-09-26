@@ -1,29 +1,30 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Inmobiliaria.Models;
+using Microsoft.Extensions.Configuration;
 using System;
-using Microsoft.Extensions.Configuration; // Necesario para IConfiguration
-using System.Linq; // Necesario para .ToList() si RepositorioInmueble retorna IEnumerable
 
 namespace Inmobiliaria.Controllers
 {
-    // Solo usuarios autenticados pueden acceder a esta clase
     [Authorize]
     public class ContratosController : Controller
     {
         private readonly RepositorioContrato repo;
-        private readonly RepositorioInmueble repoInmueble; // Usamos el nombre más descriptivo de la primera versión
+        private readonly RepositorioInmueble repoInmueble;
+        private readonly RepositorioInquilino repoInquilino;
+        private readonly RepositorioUsuario repoUsuario;
 
         public ContratosController(IConfiguration configuration)
         {
             repo = new RepositorioContrato(configuration);
             repoInmueble = new RepositorioInmueble(configuration);
+            repoInquilino = new RepositorioInquilino(configuration);
+            repoUsuario = new RepositorioUsuario(configuration);
         }
 
         // ======================================
-        // LECTURA (READ)
+        // LISTAR CONTRATOS
         // ======================================
-
         public IActionResult Index()
         {
             var lista = repo.ObtenerTodos();
@@ -33,110 +34,93 @@ namespace Inmobiliaria.Controllers
         public IActionResult Details(int id)
         {
             var contrato = repo.ObtenerPorId(id);
-            // Se asume que el método ObtenerPorId de RepositorioContrato ya carga Inquilino e Inmueble
-            // o que la vista maneja la carga de datos relacionados.
             if (contrato == null) return NotFound();
             return View(contrato);
         }
 
         // ======================================
-        // CREACIÓN (CREATE)
+        // CREAR CONTRATO
         // ======================================
-
-      
         public IActionResult Create()
         {
-            // Se usa la lógica de carga de inmuebles de la primera versión
             ViewBag.Inmuebles = repoInmueble.ObtenerDisponibles();
+            ViewBag.Inquilinos = repoInquilino.ObtenerTodos();
             return View();
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        
         public IActionResult Create(Contrato contrato)
         {
-            // La lógica de validación de la segunda versión es mejor, pero la gestión de errores
-            // con try-catch de la primera versión es más robusta.
             try
             {
-                // Se asigna el usuario creador antes de la validación del modelo
-                contrato.UsuarioCreador = User.Identity.Name;
+                // Asignar el usuario logueado como creador
+                var usuario = repoUsuario.ObtenerPorUsuario(User.Identity!.Name!);
+                contrato.UsuarioCreadorId = usuario?.Id ?? 0;
 
                 if (ModelState.IsValid)
                 {
-                    // Lógica de validación de superposición de la segunda versión
-                    // Si el repositorio ya lanza una excepción por superposición (como se vio antes),
-                    // el bloque catch la gestionará.
                     repo.Alta(contrato);
-                    
                     TempData["Mensaje"] = "Contrato creado correctamente.";
                     return RedirectToAction(nameof(Index));
                 }
             }
             catch (Exception ex)
             {
-                // Manejar la excepción de superposición de fechas o cualquier otra de la persistencia
                 ModelState.AddModelError("", ex.Message);
             }
 
-            // Recargar listas necesarias y retornar a la vista con el modelo
+            // Recargar listas
             ViewBag.Inmuebles = repoInmueble.ObtenerDisponibles();
+            ViewBag.Inquilinos = repoInquilino.ObtenerTodos();
             return View(contrato);
         }
 
         // ======================================
-        // EDICIÓN (UPDATE)
+        // EDITAR CONTRATO
         // ======================================
-
-        
         public IActionResult Edit(int id)
         {
             var contrato = repo.ObtenerPorId(id);
             if (contrato == null) return NotFound();
-            
-            // La primera versión carga todos los inmuebles, lo que permite cambiarlo a uno ocupado (por si el contrato es el que lo ocupa)
+
             ViewBag.Inmuebles = repoInmueble.ObtenerTodos();
+            ViewBag.Inquilinos = repoInquilino.ObtenerTodos();
             return View(contrato);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
- 
         public IActionResult Edit(int id, Contrato contrato)
         {
             try
             {
-                // Se asigna el usuario terminador antes de la validación
-                contrato.UsuarioTerminador = User.Identity.Name;
-
                 if (id != contrato.Id) return NotFound();
-                
+
+                // Si finaliza el contrato, asignamos al usuario logueado
+                var usuario = repoUsuario.ObtenerPorUsuario(User.Identity!.Name!);
+                contrato.UsuarioFinalizadorId = usuario?.Id;
+
                 if (ModelState.IsValid)
                 {
-                    // Lógica de validación de superposición de la segunda versión
-                    // El repositorio debe validar con el id excluido, si lanza excepción, el catch la maneja.
                     repo.Modificacion(contrato);
-                    
                     TempData["Mensaje"] = "Contrato modificado correctamente.";
                     return RedirectToAction(nameof(Index));
                 }
             }
             catch (Exception ex)
             {
-                // Manejar la excepción de superposición de fechas o cualquier otra de la persistencia
                 ModelState.AddModelError("", ex.Message);
             }
 
-            // Recargar listas necesarias y retornar a la vista con el modelo
             ViewBag.Inmuebles = repoInmueble.ObtenerTodos();
+            ViewBag.Inquilinos = repoInquilino.ObtenerTodos();
             return View(contrato);
         }
 
         // ======================================
-        // ELIMINACIÓN (DELETE)
+        // ELIMINAR CONTRATO
         // ======================================
-
         [Authorize(Roles = "Administrador")]
         public IActionResult Delete(int id)
         {
@@ -156,3 +140,4 @@ namespace Inmobiliaria.Controllers
         }
     }
 }
+    
