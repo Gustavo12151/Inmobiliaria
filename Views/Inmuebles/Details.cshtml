@@ -1,18 +1,40 @@
 @model Inmobiliaria.Models.Inmueble
+
 @{
-    ViewData["Title"] = "Detalles del Inmueble";
+    ViewData["Title"] = "Detalle del Inmueble";
 }
 
-<h2>@ViewData["Title"]</h2>
+<h2>Detalle Inmueble</h2>
 
-<table class="table table-bordered">
-    <tr><th>Dirección</th><td>@Model.Direccion</td></tr>
-    <tr><th>Ambientes</th><td>@Model.Ambientes</td></tr>
-    <tr><th>Superficie</th><td>@Model.Superficie</td></tr>
-    <tr><th>Estado</th><td>@Model.Estado</td></tr>
-    <tr><th>Precio</th><td>@Model.Precio</td></tr>
-    <tr><th>Propietario</th><td>@Model.Propietario.Nombre @Model.Propietario.Apellido</td></tr>
-    <tr><th>Tipo</th><td>@Model.Tipo.Nombre</td></tr>
-</table>
+<div class="card">
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-3">ID</dt>
+            <dd class="col-sm-9">@Model.Id</dd>
 
-<a asp-action="Index" class="btn btn-secondary">Volver</a>
+            <dt class="col-sm-3">Dirección</dt>
+            <dd class="col-sm-9">@Model.Direccion</dd>
+
+            <dt class="col-sm-3">Ambientes</dt>
+            <dd class="col-sm-9">@Model.Ambientes</dd>
+
+            <dt class="col-sm-3">Superficie</dt>
+            <dd class="col-sm-9">@Model.Superficie</dd>
+
+            <dt class="col-sm-3">Precio</dt>
+            <dd class="col-sm-9">@Model.Precio.ToString("C")</dd>
+
+            <dt class="col-sm-3">Propietario</dt>
+            <dd class="col-sm-9">@($"{Model.Propietario.Nombre} {Model.Propietario.Apellido}")</dd>
+
+            <dt class="col-sm-3">Tipo</dt>
+            <dd class="col-sm-9">@Model.Tipo.Nombre</dd>
+
+            <dt class="col-sm-3">Estado</dt>
+            <dd class="col-sm-9">@Model.Estado</dd>
+        </dl>
+
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Editar</a>
+        <a asp-action="Index" class="btn btn-secondary">Volver</a>
+    </div>
+</div>

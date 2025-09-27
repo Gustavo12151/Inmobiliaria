@@ -63,7 +63,7 @@ namespace Inmobiliaria.Controllers
             }
             return View(p);
         }
-[Authorize(Roles ="Administrador")]
+[Authorize]
         public IActionResult Delete(int id)
         {
             var p = repo.ObtenerPorId(id);

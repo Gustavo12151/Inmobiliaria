@@ -1,21 +1,21 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Inmobiliaria.Models;
-using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
 using System;
+using System.Collections.Generic;
+using Microsoft.AspNetCore.Mvc.Rendering;
+
 
 namespace Inmobiliaria.Controllers
 {
-    // Todos los usuarios autenticados pueden acceder a esta clase
-    [Authorize]
+    [Authorize] // Todos los usuarios autenticados pueden acceder
     public class InmueblesController : Controller
     {
         private readonly RepositorioInmueble repo;
 
         public InmueblesController(IConfiguration configuration)
         {
-            // Se asume que RepositorioInmueble existe y RepositorioBase está configurado
             repo = new RepositorioInmueble(configuration);
         }
 
@@ -23,7 +23,6 @@ namespace Inmobiliaria.Controllers
         // MÉTODOS DE LECTURA (READ)
         // ======================================
 
-        // Listado completo de inmuebles
         public IActionResult Index()
         {
             var lista = repo.ObtenerTodos();
@@ -34,18 +33,17 @@ namespace Inmobiliaria.Controllers
         public IActionResult Disponibles()
         {
             var lista = repo.ObtenerDisponibles();
-            // La segunda versión sugiere retornar a la vista "Index" para unificar la presentación
             return View("Index", lista);
         }
 
-        // Listado de inmuebles no ocupados entre fechas (combinación de ObtenerNoOcupadosEntreFechas de la primera versión)
-        [HttpPost] // Se usa POST para el formulario de filtrado por fechas
+        // Listado de inmuebles no ocupados entre fechas
+        [HttpPost]
         public IActionResult NoOcupados(DateTime inicio, DateTime fin)
         {
-            // Se usa el nombre del método del segundo bloque, pero con la lógica del filtro por POST del primero.
             var lista = repo.ObtenerNoOcupadosEntreFechas(inicio, fin);
-            // La segunda versión sugiere retornar a la vista "Index" para unificar la presentación
-            ViewBag.FiltroActivo = true; // Indicador para la vista si se desea mostrar info de fechas
+            ViewBag.FiltroActivo = true;
+            ViewBag.FechaInicio = inicio.ToString("yyyy-MM-dd");
+            ViewBag.FechaFin = fin.ToString("yyyy-MM-dd");
             return View("Index", lista);
         }
 
@@ -61,17 +59,17 @@ namespace Inmobiliaria.Controllers
         // MÉTODOS DE CREACIÓN (CREATE)
         // ======================================
 
-        // Vista de formulario de alta (solo Administradores)
-        [Authorize(Roles = "Administrador")]
+        [Authorize]
         public IActionResult Create()
         {
+            ViewBag.Propietarios = new SelectList(repo.ObtenerPropietarios(), "Id", "NombreCompleto"); // Id y NombreCompleto
+    ViewBag.Tipos = new SelectList(repo.ObtenerTipos(), "Id", "Nombre");
             return View();
         }
 
-        // Procesamiento del alta (solo Administradores)
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Administrador")]
+        [Authorize]
         public IActionResult Create(Inmueble inmueble)
         {
             if (ModelState.IsValid)
@@ -87,7 +85,6 @@ namespace Inmobiliaria.Controllers
         // MÉTODOS DE EDICIÓN (UPDATE)
         // ======================================
 
-        // Vista de formulario de edición (solo Administradores)
         [Authorize(Roles = "Administrador")]
         public IActionResult Edit(int id)
         {
@@ -96,7 +93,6 @@ namespace Inmobiliaria.Controllers
             return View(inmueble);
         }
 
-        // Procesamiento de la edición (solo Administradores)
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Administrador")]
@@ -106,8 +102,7 @@ namespace Inmobiliaria.Controllers
 
             if (ModelState.IsValid)
             {
-                // Asegurar que el ID del inmueble en el modelo es el correcto
-                inmueble.Id = id; 
+                inmueble.Id = id;
                 repo.Modificacion(inmueble);
                 TempData["Mensaje"] = "Inmueble modificado correctamente.";
                 return RedirectToAction(nameof(Index));
@@ -119,7 +114,6 @@ namespace Inmobiliaria.Controllers
         // MÉTODOS DE ELIMINACIÓN (DELETE)
         // ======================================
 
-        // Vista de confirmación de baja (solo Administradores)
         [Authorize(Roles = "Administrador")]
         public IActionResult Delete(int id)
         {
@@ -128,7 +122,6 @@ namespace Inmobiliaria.Controllers
             return View(inmueble);
         }
 
-        // Procesamiento de la baja (solo Administradores)
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Administrador")]
