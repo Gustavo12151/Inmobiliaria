@@ -4,14 +4,42 @@
 
 <div class="container mt-4">
     <h2>Bienvenido, @User.Identity!.Name!</h2>
+
+    <!-- ALERTS de mensajes -->
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+            @TempData["Mensaje"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+    }
+
     <div class="row mt-4">
 
-        <!-- Propietarios: solo administrador -->
+        <!-- Usuarios: solo administrador -->
         @if (User.IsInRole("Administrador"))
         {
             <div class="col-md-3 mb-4">
+                <a href="@Url.Action("Index", "Usuarios")" class="text-decoration-none">
+                    <div class="card text-white bg-dark h-100 shadow-sm">
+                        <div class="card-body d-flex flex-column justify-content-center align-items-center">
+                            <h5 class="card-title">Usuarios</h5>
+                            <p class="card-text">Administrar empleados</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-3 mb-4">
                 <a href="@Url.Action("Index", "Propietarios")" class="text-decoration-none">
-                    <div class="card text-white bg-primary h-100">
+                    <div class="card text-white bg-primary h-100 shadow-sm">
                         <div class="card-body d-flex flex-column justify-content-center align-items-center">
                             <h5 class="card-title">Propietarios</h5>
                             <p class="card-text">Administrar propietarios</p>
@@ -21,10 +49,10 @@
             </div>
         }
 
-        <!-- Inquilinos: administrador y empleado -->
+        <!-- Inquilinos -->
         <div class="col-md-3 mb-4">
             <a href="@Url.Action("Index", "Inquilinos")" class="text-decoration-none">
-                <div class="card text-white bg-success h-100">
+                <div class="card text-white bg-success h-100 shadow-sm">
                     <div class="card-body d-flex flex-column justify-content-center align-items-center">
                         <h5 class="card-title">Inquilinos</h5>
                         <p class="card-text">Administrar inquilinos</p>
@@ -33,10 +61,10 @@
             </a>
         </div>
 
-        <!-- Inmuebles: administrador y empleado -->
+        <!-- Inmuebles -->
         <div class="col-md-3 mb-4">
             <a href="@Url.Action("Index", "Inmuebles")" class="text-decoration-none">
-                <div class="card text-white bg-warning h-100">
+                <div class="card text-dark bg-warning h-100 shadow-sm">
                     <div class="card-body d-flex flex-column justify-content-center align-items-center">
                         <h5 class="card-title">Inmuebles</h5>
                         <p class="card-text">Administrar inmuebles</p>
@@ -45,10 +73,10 @@
             </a>
         </div>
 
-        <!-- Contratos: administrador y empleado -->
+        <!-- Contratos -->
         <div class="col-md-3 mb-4">
             <a href="@Url.Action("Index", "Contratos")" class="text-decoration-none">
-                <div class="card text-white bg-danger h-100">
+                <div class="card text-white bg-danger h-100 shadow-sm">
                     <div class="card-body d-flex flex-column justify-content-center align-items-center">
                         <h5 class="card-title">Contratos</h5>
                         <p class="card-text">Administrar contratos</p>
@@ -57,10 +85,10 @@
             </a>
         </div>
 
-        <!-- Pagos: administrador y empleado -->
+        <!-- Pagos -->
         <div class="col-md-3 mb-4">
             <a href="@Url.Action("Index", "Pagos")" class="text-decoration-none">
-                <div class="card text-white bg-info h-100">
+                <div class="card text-white bg-info h-100 shadow-sm">
                     <div class="card-body d-flex flex-column justify-content-center align-items-center">
                         <h5 class="card-title">Pagos</h5>
                         <p class="card-text">Administrar pagos</p>
@@ -68,10 +96,5 @@
                 </div>
             </a>
         </div>
-
     </div>
 </div>
-
-@section Scripts {
-    <!-- Scripts específicos si son necesarios -->
-}

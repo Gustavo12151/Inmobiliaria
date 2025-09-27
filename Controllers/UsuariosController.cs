@@ -83,40 +83,86 @@ namespace Inmobiliaria.Controllers
             return View(usuario);
         }
 
-        [Authorize]
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult EditarPerfil(Usuario usuario, IFormFile? avatarFile)
+     [Authorize]
+[HttpPost]
+[ValidateAntiForgeryToken]
+public async Task<IActionResult> EditarPerfil(Usuario usuario, IFormFile? avatarFile)
+{
+    if (usuario.Id <= 0) return NotFound();
+
+    var usuarioExistente = repo.ObtenerPorId(usuario.Id);
+    if (usuarioExistente == null) return NotFound();
+
+    // Mantener el rol
+    usuario.Rol = usuarioExistente.Rol;
+
+    // ✅ Si se sube un avatar, reemplazar
+    if (avatarFile != null && avatarFile.Length > 0)
+    {
+        var fileName = Guid.NewGuid() + Path.GetExtension(avatarFile.FileName);
+        var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "avatars", fileName);
+        using (var stream = new FileStream(path, FileMode.Create))
         {
-            if (usuario.Id <= 0) return NotFound();
-
-            var usuarioExistente = repo.ObtenerPorId(usuario.Id);
-            if (usuarioExistente == null) return NotFound();
-
-            // Avatar
-            if (avatarFile != null && avatarFile.Length > 0)
-            {
-                var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "avatars", avatarFile.FileName);
-                using (var stream = new FileStream(path, FileMode.Create))
-                {
-                    avatarFile.CopyTo(stream);
-                }
-                usuario.Avatar = "/avatars/" + avatarFile.FileName;
-            }
-            else
-            {
-                usuario.Avatar = usuarioExistente.Avatar;
-            }
-
-            // Mantener rol y clave
-            usuario.Rol = usuarioExistente.Rol;
-            usuario.Clave = usuarioExistente.Clave;
-
-            repo.Modificacion(usuario);
-
-            TempData["Mensaje"] = "Cambios realizados correctamente.";
-            return RedirectToAction("Perfil", new { id = usuario.Id });
+            await avatarFile.CopyToAsync(stream);
         }
+        usuario.Avatar = "/avatars/" + fileName;
+    }
+    else
+    {
+        // ✅ Si no se sube avatar, conservar el existente
+        usuario.Avatar = usuarioExistente.Avatar;
+    }
+
+    repo.Modificacion(usuario);
+
+    // Refrescar claims
+    var claims = new List<Claim>
+    {
+        new Claim(ClaimTypes.Name, usuario.NombreUsuario ?? ""),
+        new Claim(ClaimTypes.Role, usuario.Rol ?? "Empleado"),
+        new Claim("Avatar", usuario.Avatar ?? "")
+    };
+    var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+
+    await HttpContext.SignInAsync(
+        CookieAuthenticationDefaults.AuthenticationScheme,
+        new ClaimsPrincipal(claimsIdentity)
+    );
+
+    TempData["Mensaje"] = "Perfil actualizado con éxito";
+    return RedirectToAction("Index", "Home");
+}
+
+
+        [Authorize]
+[HttpPost]
+[ValidateAntiForgeryToken]
+public async Task<IActionResult> EliminarAvatar(int id)
+{
+    var usuario = repo.ObtenerPorId(id);
+    if (usuario == null) return NotFound();
+
+    usuario.Avatar = "/avatars/default.png"; // 🔹 Avatar por defecto
+    repo.Modificacion(usuario);
+
+    // Refrescar claims
+    var claims = new List<Claim>
+    {
+        new Claim(ClaimTypes.Name, usuario.NombreUsuario ?? ""),
+        new Claim(ClaimTypes.Role, usuario.Rol ?? "Empleado"),
+        new Claim("Avatar", usuario.Avatar ?? "")
+    };
+    var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+
+    await HttpContext.SignInAsync(
+        CookieAuthenticationDefaults.AuthenticationScheme,
+        new ClaimsPrincipal(claimsIdentity)
+    );
+
+    TempData["Mensaje"] = "Avatar eliminado correctamente";
+    return RedirectToAction("Index", "Home");
+}
+
 
         [Authorize]
         [HttpGet]
