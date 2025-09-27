@@ -26,10 +26,16 @@ namespace Inmobiliaria.Controllers
         // LISTAR CONTRATOS
         // ======================================
         public IActionResult Index()
-        {
-            var lista = repo.ObtenerTodos();
-            return View(lista);
-        }
+{
+    var contratos = repo.ObtenerTodos();
+
+    // Determinar rol del usuario
+    bool esAdmin = HttpContext.User.IsInRole("Administrador");
+
+    ViewBag.EsAdmin = esAdmin;
+
+    return View(contratos);
+}
 
         public IActionResult Details(int id)
         {

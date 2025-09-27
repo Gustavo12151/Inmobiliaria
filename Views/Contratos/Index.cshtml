@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Lista de Contratos";
+    bool esAdmin = ViewBag.EsAdmin ?? false; // Se pasa desde el controlador
 }
 
 <h2>Lista de Contratos</h2>
@@ -23,8 +24,14 @@
             <th>Fecha Inicio</th>
             <th>Fecha Fin</th>
             <th>Monto Mensual</th>
-            <th>Usuario Creador</th>
-            <th>Usuario Finalizador</th>
+
+            @* Solo se muestran estas columnas si es administrador *@
+            @if (esAdmin)
+            {
+                <th>Usuario Creador</th>
+                <th>Usuario Finalizador</th>
+            }
+
             <th>Acciones</th>
         </tr>
     </thead>
@@ -38,21 +45,30 @@
                 <td>@contrato.FechaInicio.ToString("dd/MM/yyyy")</td>
                 <td>@contrato.FechaFin.ToString("dd/MM/yyyy")</td>
                 <td>$ @contrato.MontoMensual.ToString("N2")</td>
-                <td>@contrato.UsuarioCreador?.NombreUsuario</td>
-                <td>
-                    @if (contrato.UsuarioFinalizador != null)
-                    {
-                        @contrato.UsuarioFinalizador.NombreUsuario
-                    }
-                    else
-                    {
-                        <span class="text-muted">No finalizado</span>
-                    }
-                </td>
+
+                @if (esAdmin)
+                {
+                    <td>@contrato.UsuarioCreador?.NombreUsuario</td>
+                    <td>
+                        @if (contrato.UsuarioFinalizador != null)
+                        {
+                            @contrato.UsuarioFinalizador.NombreUsuario
+                        }
+                        else
+                        {
+                            <span class="text-muted">No finalizado</span>
+                        }
+                    </td>
+                }
+
                 <td>
                     <a asp-action="Details" asp-route-id="@contrato.Id" class="btn btn-info btn-sm">Ver</a>
-                    <a asp-action="Edit" asp-route-id="@contrato.Id" class="btn btn-warning btn-sm">Editar</a>
-                    <a asp-action="Delete" asp-route-id="@contrato.Id" class="btn btn-danger btn-sm">Eliminar</a>
+                    <a asp-action="Finalizar" asp-route-id="@contrato.Id" class="btn btn-warning btn-sm">Finalizar</a>
+
+                    @if (esAdmin)
+                    {
+                        <a asp-action="Edit" asp-route-id="@contrato.Id" class="btn btn-primary btn-sm">Editar</a>
+                    }
                 </td>
             </tr>
         }

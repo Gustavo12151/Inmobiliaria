@@ -1,36 +1,73 @@
 @model IEnumerable<Inmobiliaria.Models.Pago>
 
-<h2>Pagos</h2>
-<a class="btn btn-primary mb-3" asp-action="Create">Nuevo Pago</a>
+@{
+    ViewData["Title"] = "Lista de Pagos";
+    bool esAdmin = ViewBag.EsAdmin ?? false; // Usamos lo que viene del controlador
+}
 
-<table class="table table-striped">
-    <thead>
+<h2>Lista de Pagos</h2>
+<hr />
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+
+<table class="table table-striped table-bordered">
+    <thead class="table-dark">
         <tr>
-            <th>N° Pago</th>
-            <th>Fecha</th>
-            <th>Importe</th>
+            <th>ID</th>
             <th>Contrato</th>
-            <th>Usuario Creador</th>
-            <th>Usuario Anulador</th>
+            <th>Numero Pago</th>
+            <th>Fecha Pago</th>
+            <th>Importe</th>
+            @if (esAdmin)
+            {
+                <th>Usuario Creador</th>
+                <th>Usuario Anulador</th>
+            }
             <th>Acciones</th>
         </tr>
     </thead>
     <tbody>
-    @foreach (var p in Model)
-    {
-        <tr>
-            <td>@p.NumeroPago</td>
-            <td>@p.FechaPago.ToShortDateString()</td>
-            <td>$@p.Importe</td>
-            <td>@p.Contrato?.Id</td>
-            <td>@p.UsuarioCreador</td>
-            <td>@p.UsuarioAnulador</td>
-            <td>
-                <a asp-action="Details" asp-route-id="@p.Id" class="btn btn-info btn-sm">Detalles</a>
-                <a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-warning btn-sm">Editar</a>
-                <a asp-action="Delete" asp-route-id="@p.Id" class="btn btn-danger btn-sm">Eliminar</a>
-            </td>
-        </tr>
-    }
+        @foreach (var pago in Model)
+        {
+            <tr>
+                <td>@pago.Id</td>
+                <td>@($"Contrato {pago.ContratoId} ({pago.Contrato?.FechaInicio.ToString("dd/MM/yyyy")} - {pago.Contrato?.FechaFin.ToString("dd/MM/yyyy")})")</td>
+                <td>@pago.NumeroPago</td>
+                <td>@pago.FechaPago.ToString("dd/MM/yyyy")</td>
+                <td>$@pago.Importe.ToString("N2")</td>
+                
+                @if (esAdmin)
+                {
+                    <td>@pago.UsuarioCreador</td>
+                    <td>
+                        @if (!string.IsNullOrEmpty(pago.UsuarioAnulador))
+                        {
+                            @pago.UsuarioAnulador
+                        }
+                        else
+                        {
+                            <span class="text-muted">No anulado</span>
+                        }
+                    </td>
+                }
+
+                <td>
+                    <a asp-action="Details" asp-route-id="@pago.Id" class="btn btn-info btn-sm">Ver</a>
+
+                    @if (esAdmin)
+                    {
+                        <a asp-action="Edit" asp-route-id="@pago.Id" class="btn btn-warning btn-sm">Editar</a>
+                        <a asp-action="Delete" asp-route-id="@pago.Id" class="btn btn-danger btn-sm">Anular</a>
+                    }
+                </td>
+            </tr>
+        }
     </tbody>
 </table>
+
+<a asp-action="Create" class="btn btn-primary">Nuevo Pago</a>
