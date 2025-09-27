@@ -2,7 +2,7 @@
 
 @{
     ViewData["Title"] = "Lista de Pagos";
-    bool esAdmin = ViewBag.EsAdmin ?? false; // Usamos lo que viene del controlador
+    bool esAdmin = User.IsInRole("Administrador");
 }
 
 <h2>Lista de Pagos</h2>
@@ -36,16 +36,16 @@
         {
             <tr>
                 <td>@pago.Id</td>
-                <td>@($"Contrato {pago.ContratoId} ({pago.Contrato?.FechaInicio.ToString("dd/MM/yyyy")} - {pago.Contrato?.FechaFin.ToString("dd/MM/yyyy")})")</td>
+                <td>@($"Contrato {pago.ContratoId} ({pago.Contrato?.FechaInicio:dd/MM/yyyy} - {pago.Contrato?.FechaFin:dd/MM/yyyy})")</td>
                 <td>@pago.NumeroPago</td>
                 <td>@pago.FechaPago.ToString("dd/MM/yyyy")</td>
                 <td>$@pago.Importe.ToString("N2")</td>
-                
+
                 @if (esAdmin)
                 {
                     <td>@pago.UsuarioCreador</td>
                     <td>
-                        @if (!string.IsNullOrEmpty(pago.UsuarioAnulador))
+                        @if (pago.UsuarioAnulador != null)
                         {
                             @pago.UsuarioAnulador
                         }
@@ -62,7 +62,13 @@
                     @if (esAdmin)
                     {
                         <a asp-action="Edit" asp-route-id="@pago.Id" class="btn btn-warning btn-sm">Editar</a>
-                        <a asp-action="Delete" asp-route-id="@pago.Id" class="btn btn-danger btn-sm">Anular</a>
+
+                        <form asp-action="Delete" asp-route-id="@pago.Id" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-danger btn-sm" 
+                                    onclick="return confirm('¿Seguro que desea anular este pago?');">
+                                Anular
+                            </button>
+                        </form>
                     }
                 </td>
             </tr>
