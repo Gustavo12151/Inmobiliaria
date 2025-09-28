@@ -1,61 +1,48 @@
 @model Inmobiliaria.Models.Usuario
-@{
-    ViewData["Title"] = "Mi Perfil";
-}
 
-<h2>Mi Perfil</h2>
+<h2>Perfil de Usuario</h2>
 
-@if (TempData["Mensaje"] != null)
-{
-    <div class="alert alert-success">@TempData["Mensaje"]</div>
-}
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger">@TempData["Error"]</div>
-}
-
-<!-- FORMULARIO 1: Guardar Cambios (Nombre y Avatar) -->
-<form asp-action="EditarPerfil" asp-controller="Usuarios" method="post" enctype="multipart/form-data">
+<form asp-action="EditarPerfil" method="post" enctype="multipart/form-data">
     <input type="hidden" asp-for="Id" />
 
-    <div class="mb-3">
-        <label asp-for="NombreUsuario" class="form-label"></label>
+    <div class="form-group mb-2">
+        <label asp-for="NombreUsuario">Usuario</label>
         <input asp-for="NombreUsuario" class="form-control" />
     </div>
 
-    <div class="mb-3">
-        <label class="form-label">Rol</label>
-        <input type="text" value="@Model.Rol" class="form-control" readonly />
+    <div class="form-group mb-2">
+        <label asp-for="Clave">Clave</label>
+        <input asp-for="Clave" type="password" class="form-control" />
     </div>
 
-    <div class="mb-3">
-        <label class="form-label">Avatar actual</label>
-        @if (!string.IsNullOrEmpty(Model.Avatar))
+    <div class="form-group mb-2">
+        <label asp-for="Rol">Rol</label>
+        @if (User.IsInRole("Administrador"))
         {
-            <div class="mb-2">
-                <img src="@Model.Avatar" alt="Avatar" width="100" height="100" class="rounded-circle border" />
-            </div>
+            <select name="Rol" class="form-control">
+                @if(Model.Rol == "Empleado")
+                {
+                    <option value="Empleado" selected>Empleado</option>
+                    <option value="Administrador">Administrador</option>
+                }
+                else
+                {
+                    <option value="Empleado">Empleado</option>
+                    <option value="Administrador" selected>Administrador</option>
+                }
+            </select>
         }
         else
         {
-            <div class="mb-2">
-                <img src="/avatars/default.png" alt="Avatar" width="100" height="100" class="rounded-circle border" />
-            </div>
+            <input asp-for="Rol" class="form-control" readonly />
         }
-        <input type="file" name="avatarFile" class="form-control" />
     </div>
 
-    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-</form>
+    <div class="form-group mb-3">
+        <label asp-for="Avatar">Avatar (URL)</label>
+        <input asp-for="Avatar" class="form-control" />
+    </div>
 
-<!-- FORMULARIO 2: Eliminar Avatar -->
-<form asp-action="EliminarAvatar" asp-controller="Usuarios" method="post" class="mt-2">
-    <input type="hidden" name="id" value="@Model.Id" />
-    <button type="submit" class="btn btn-danger">Eliminar Avatar</button>
-</form>
-
-<!-- FORMULARIO 3: Cambiar Contraseña -->
-<form asp-action="CambiarClave" asp-controller="Usuarios" method="get" class="mt-2">
-    <input type="hidden" name="id" value="@Model.Id" />
-    <button type="submit" class="btn btn-warning">Cambiar Contraseña</button>
+    <button type="submit" class="btn btn-success">Guardar cambios</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
 </form>

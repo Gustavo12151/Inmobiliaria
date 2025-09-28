@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = "Listado de Inmuebles";
     bool esAdmin = User.IsInRole("Administrador");
+    bool esEmpleado = User.IsInRole("Empleado");
     bool filtroActivo = ViewBag.FiltroActivo ?? false;
 }
 
@@ -59,7 +60,7 @@
             <th>Propietario</th>
             <th>Tipo</th>
             <th>Estado</th>
-            @if (esAdmin)
+            @if (esAdmin || esEmpleado)
             {
                 <th>Acciones</th>
             }
@@ -86,11 +87,14 @@
                         <span class="badge bg-danger">@inmueble.Estado</span>
                     }
                 </td>
-                @if (esAdmin)
+                @if (esAdmin || esEmpleado)
                 {
                     <td>
                         <a asp-action="Edit" asp-route-id="@inmueble.Id" class="btn btn-warning btn-sm">Editar</a>
-                        <a asp-action="Delete" asp-route-id="@inmueble.Id" class="btn btn-danger btn-sm">Eliminar</a>
+                        @if (esAdmin)
+                        {
+                            <a asp-action="Delete" asp-route-id="@inmueble.Id" class="btn btn-danger btn-sm">Eliminar</a>
+                        }
                     </td>
                 }
             </tr>
