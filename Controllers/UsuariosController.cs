@@ -302,5 +302,55 @@ namespace Inmobiliaria.Controllers
             repo.Baja(id);
             return RedirectToAction(nameof(Index));
         }
+
+        [Authorize(Roles = "Administrador")]
+[HttpGet]
+public IActionResult EditarEmpleado(int id)
+{
+    var usuario = repo.ObtenerPorId(id);
+    if (usuario == null) return NotFound();
+    return View(usuario);
+}
+
+[Authorize(Roles = "Administrador")]
+[HttpPost]
+[ValidateAntiForgeryToken]
+public async Task<IActionResult> EditarEmpleado(Usuario usuario, IFormFile? avatarFile, string? nuevaClave)
+{
+    var usuarioExistente = repo.ObtenerPorId(usuario.Id);
+    if (usuarioExistente == null) return NotFound();
+
+    // ✅ Mantener avatar si no se sube nuevo
+    if (avatarFile != null && avatarFile.Length > 0)
+    {
+        var fileName = Guid.NewGuid() + Path.GetExtension(avatarFile.FileName);
+        var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "avatars", fileName);
+        using (var stream = new FileStream(path, FileMode.Create))
+        {
+            await avatarFile.CopyToAsync(stream);
+        }
+        usuario.Avatar = "/avatars/" + fileName;
+    }
+    else
+    {
+        usuario.Avatar = usuarioExistente.Avatar;
+    }
+
+    // ✅ Contraseña: cifrar solo si el admin escribió algo
+    if (!string.IsNullOrEmpty(nuevaClave))
+    {
+        usuario.Clave = BCrypt.Net.BCrypt.HashPassword(nuevaClave);
+    }
+    else
+    {
+        usuario.Clave = null; // Para que el repo no la modifique
+    }
+
+    repo.Modificacion(usuario);
+
+    TempData["Mensaje"] = "Empleado actualizado correctamente.";
+    return RedirectToAction(nameof(Index));
+}
+
     }
 }

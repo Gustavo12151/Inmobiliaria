@@ -1,0 +1,49 @@
+@model Inmobiliaria.Models.Usuario
+
+@{
+    ViewData["Title"] = "Editar Empleado";
+}
+
+<h2>Editar Empleado</h2>
+
+<form asp-action="EditarEmpleado" method="post" enctype="multipart/form-data">
+    <input type="hidden" asp-for="Id" />
+
+    <!-- Nombre de usuario -->
+    <div class="form-group mb-3">
+        <label asp-for="NombreUsuario" class="form-label">Usuario</label>
+        <input asp-for="NombreUsuario" class="form-control" />
+    </div>
+
+    <!-- Rol -->
+    <div class="form-group mb-3">
+        <label class="form-label">Rol</label>
+        <select asp-for="Rol" class="form-control">
+            <option value="Empleado" selected="@(Model.Rol == "Empleado")">Empleado</option>
+            <option value="Administrador" selected="@(Model.Rol == "Administrador")">Administrador</option>
+        </select>
+    </div>
+
+    <!-- Avatar -->
+    <div class="form-group mb-3">
+        <label class="form-label">Avatar</label>
+        @if (!string.IsNullOrEmpty(Model.Avatar))
+        {
+            <div class="mb-2">
+                <img src="@Model.Avatar" alt="Avatar" width="100" height="100" class="rounded-circle" />
+            </div>
+        }
+        <input type="file" name="avatarFile" class="form-control" />
+        <small class="form-text text-muted">Si no seleccionás nada, se mantiene el actual.</small>
+    </div>
+
+    <!-- Contraseña -->
+    <div class="form-group mb-3">
+        <label class="form-label">Nueva contraseña</label>
+        <input type="password" name="nuevaClave" class="form-control" />
+        <small class="form-text text-muted">Dejar vacío para no modificar.</small>
+    </div>
+
+    <button type="submit" class="btn btn-success">Guardar cambios</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>
