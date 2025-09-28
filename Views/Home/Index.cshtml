@@ -24,30 +24,24 @@
     <div class="row mt-4">
 
         <!-- Usuarios: solo administrador -->
-        @if (User.IsInRole("Administrador"))
-        {
-            <div class="col-md-3 mb-4">
-                <a href="@Url.Action("Index", "Usuarios")" class="text-decoration-none">
-                    <div class="card text-white bg-dark h-100 shadow-sm">
-                        <div class="card-body d-flex flex-column justify-content-center align-items-center">
-                            <h5 class="card-title">Usuarios</h5>
-                            <p class="card-text">Administrar empleados</p>
-                        </div>
-                    </div>
-                </a>
+       @if (User.IsInRole("Administrador") || User.IsInRole("Empleado"))
+{
+    <div class="col-md-3 mb-4">
+        <a href="@Url.Action("Index", "Propietarios")" class="text-decoration-none">
+            <div class="card text-white bg-primary h-100 shadow-sm">
+                <div class="card-body d-flex flex-column justify-content-center align-items-center">
+                    <h5 class="card-title">Propietarios</h5>
+                    <p class="card-text">
+                        @(User.IsInRole("Administrador") 
+                            ? "Administrar propietarios" 
+                            : "Ver propietarios")
+                    </p>
+                </div>
             </div>
+        </a>
+    </div>
+}
 
-            <div class="col-md-3 mb-4">
-                <a href="@Url.Action("Index", "Propietarios")" class="text-decoration-none">
-                    <div class="card text-white bg-primary h-100 shadow-sm">
-                        <div class="card-body d-flex flex-column justify-content-center align-items-center">
-                            <h5 class="card-title">Propietarios</h5>
-                            <p class="card-text">Administrar propietarios</p>
-                        </div>
-                    </div>
-                </a>
-            </div>
-        }
 
         <!-- Tipos de Inmuebles: Administrador y Empleado -->
         @if (User.IsInRole("Administrador") || User.IsInRole("Empleado"))

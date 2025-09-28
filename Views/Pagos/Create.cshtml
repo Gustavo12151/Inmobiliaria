@@ -7,30 +7,41 @@
 <h2>Registrar Pago</h2>
 
 <form asp-action="Create" method="post">
-    <div class="form-group">
+    <div class="form-group mb-3">
         <label>Usuario</label>
         <input type="text" class="form-control" value="@ViewBag.UsuarioActual" disabled />
     </div>
 
-    <div class="form-group">
-        <label>Contrato</label>
-        <input asp-for="ContratoId" class="form-control" />
+    <div class="form-group mb-3">
+        <label for="ContratoId">Contrato</label>
+        <select asp-for="ContratoId" class="form-select" asp-items="@(new SelectList(ViewBag.Contratos, "Id", "Descripcion"))">
+            <option value="">-- Seleccionar Contrato --</option>
+        </select>
+        <span asp-validation-for="ContratoId" class="text-danger"></span>
     </div>
 
-    <div class="form-group">
-        <label>Número de Pago</label>
+    <div class="form-group mb-3">
+        <label asp-for="NumeroPago"></label>
         <input asp-for="NumeroPago" class="form-control" />
+        <span asp-validation-for="NumeroPago" class="text-danger"></span>
     </div>
 
-    <div class="form-group">
-        <label>Fecha Pago</label>
+    <div class="form-group mb-3">
+        <label asp-for="FechaPago"></label>
         <input asp-for="FechaPago" class="form-control" type="date" />
+        <span asp-validation-for="FechaPago" class="text-danger"></span>
     </div>
 
-    <div class="form-group">
-        <label>Importe</label>
+    <div class="form-group mb-3">
+        <label asp-for="Importe"></label>
         <input asp-for="Importe" class="form-control" />
+        <span asp-validation-for="Importe" class="text-danger"></span>
     </div>
 
     <button type="submit" class="btn btn-primary mt-3">Registrar Pago</button>
+    <a asp-action="Index" class="btn btn-secondary mt-3">Cancelar</a>
 </form>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

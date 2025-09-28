@@ -249,42 +249,49 @@ namespace Inmobiliaria.Controllers
             return View(usuario);
         }
 
-        // 🔹 MODIFICADO: Edit GET agrega ViewBag.Roles
-        [Authorize(Roles = "Administrador")]
-        public IActionResult Edit(int id)
-        {
-            var usuario = repo.ObtenerPorId(id);
-            if (usuario == null) return NotFound();
+        // =========================
+// ADMIN EDITA EMPLEADOS
+// =========================
+[Authorize(Roles = "Administrador")]
+public IActionResult EditEmpleado(int id)
+{
+    var usuario = repo.ObtenerPorId(id);
+    if (usuario == null) return NotFound();
+    return View(usuario);
+}
 
-            // Solo administrador puede cambiar rol
-            ViewBag.Roles = new SelectList(new List<string> { "Empleado", "Administrador" }, usuario.Rol); // 🔹 MODIFICADO
+[HttpPost]
+[ValidateAntiForgeryToken]
+[Authorize(Roles = "Administrador")]
+public IActionResult EditEmpleado(int id, Usuario usuario, string? nuevaClave)
+{
+    if (id != usuario.Id) return NotFound();
 
-            return View(usuario);
-        }
+    var usuarioExistente = repo.ObtenerPorId(id);
+    if (usuarioExistente == null) return NotFound();
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Administrador")]
-        public IActionResult Edit(int id, Usuario usuario)
-        {
-            if (id != usuario.Id) return NotFound();
-            if (ModelState.IsValid)
-            {
-                // 🔹 MODIFICADO: solo admin puede modificar el rol
-                var usuarioExistente = repo.ObtenerPorId(id);
-                if (usuarioExistente != null)
-                {
-                    if (!User.IsInRole("Administrador"))
-                        usuario.Rol = usuarioExistente.Rol; // 🔹 MODIFICADO
-                }
+    // Mantener avatar y clave si no se modifican
+    usuario.Avatar = usuarioExistente.Avatar;
 
-                repo.Modificacion(usuario);
-                return RedirectToAction(nameof(Index));
-            }
-            // 🔹 MODIFICADO: recargar roles si hay error
-            ViewBag.Roles = new SelectList(new List<string> { "Empleado", "Administrador" }, usuario.Rol); // 🔹 MODIFICADO
-            return View(usuario);
-        }
+    if (!string.IsNullOrWhiteSpace(nuevaClave))
+    {
+        usuario.Clave = BCrypt.Net.BCrypt.HashPassword(nuevaClave);
+    }
+    else
+    {
+        usuario.Clave = usuarioExistente.Clave;
+    }
+
+    if (ModelState.IsValid)
+    {
+        repo.Modificacion(usuario);
+        TempData["Mensaje"] = "Empleado actualizado con éxito.";
+        return RedirectToAction(nameof(Index));
+    }
+
+    return View(usuario);
+}
+
 
         [Authorize(Roles = "Administrador")]
         public IActionResult Delete(int id)

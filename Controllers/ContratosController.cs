@@ -26,17 +26,18 @@ namespace Inmobiliaria.Controllers
         // LISTAR CONTRATOS
         // ======================================
         public IActionResult Index()
-{
-    var contratos = repo.ObtenerTodos();
+        {
+            var contratos = repo.ObtenerTodos();
 
-    // Determinar rol del usuario
-    bool esAdmin = HttpContext.User.IsInRole("Administrador");
+            // Determinar rol del usuario
+            bool esAdmin = HttpContext.User.IsInRole("Administrador");
+            ViewBag.EsAdmin = esAdmin;
 
-    ViewBag.EsAdmin = esAdmin;
+            return View(contratos);
+        }
 
-    return View(contratos);
-}
 
+        
         public IActionResult Details(int id)
         {
             var contrato = repo.ObtenerPorId(id);
@@ -49,7 +50,9 @@ namespace Inmobiliaria.Controllers
         // ======================================
         public IActionResult Create()
         {
-            ViewBag.Inmuebles = repoInmueble.ObtenerDisponibles();
+            // 🔹 Mostrar todos los inmuebles, no solo "disponibles".
+            // La validación se hace por fechas en RepositorioContrato.
+            ViewBag.Inmuebles = repoInmueble.ObtenerTodos();
             ViewBag.Inquilinos = repoInquilino.ObtenerTodos();
             return View();
         }
@@ -73,11 +76,12 @@ namespace Inmobiliaria.Controllers
             }
             catch (Exception ex)
             {
+                // ⚠️ Si se produce superposición, mostrarlo en la vista
                 ModelState.AddModelError("", ex.Message);
             }
 
             // Recargar listas
-            ViewBag.Inmuebles = repoInmueble.ObtenerDisponibles();
+            ViewBag.Inmuebles = repoInmueble.ObtenerTodos();
             ViewBag.Inquilinos = repoInquilino.ObtenerTodos();
             return View(contrato);
         }
@@ -116,6 +120,7 @@ namespace Inmobiliaria.Controllers
             }
             catch (Exception ex)
             {
+                // ⚠️ Mostrar error si hay solapamiento de fechas
                 ModelState.AddModelError("", ex.Message);
             }
 
@@ -144,6 +149,44 @@ namespace Inmobiliaria.Controllers
             TempData["Mensaje"] = "Contrato eliminado correctamente.";
             return RedirectToAction(nameof(Index));
         }
+
+
+        // ======================================
+// FINALIZAR CONTRATO (solo guarda UsuarioFinalizadorId)
+// ======================================
+[Authorize]
+public IActionResult Finalizar(int id)
+{
+    var contrato = repo.ObtenerPorId(id);
+    if (contrato == null) return NotFound();
+
+    return View(contrato); // mostramos datos del contrato
+}
+
+[HttpPost]
+[ValidateAntiForgeryToken]
+[Authorize]
+public IActionResult Finalizar(int id, Contrato contrato)
+{
+    var contratoDb = repo.ObtenerPorId(id);
+    if (contratoDb == null) return NotFound();
+
+    // Guardamos quién finalizó el contrato
+    var usuario = repoUsuario.ObtenerPorUsuario(User.Identity!.Name!);
+    contratoDb.UsuarioFinalizadorId = usuario?.Id;
+
+    try
+    {
+        repo.Modificacion(contratoDb);
+        TempData["Mensaje"] = "Contrato finalizado correctamente.";
+        return RedirectToAction(nameof(Index));
+    }
+    catch (Exception ex)
+    {
+        TempData["Error"] = ex.Message;
+        return RedirectToAction(nameof(Details), new { id });
     }
 }
-    
+
+    }
+}

@@ -7,6 +7,9 @@
 <h2>Editar Contrato</h2>
 <hr />
 
+<!-- Mostrar errores generales -->
+<div asp-validation-summary="All" class="text-danger mb-3"></div>
+
 <form asp-action="Edit" method="post">
     <input type="hidden" asp-for="Id" />
 

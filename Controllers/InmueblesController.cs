@@ -48,6 +48,7 @@ namespace Inmobiliaria.Controllers
         }
 
         // Detalle de un inmueble
+        
         public IActionResult Details(int id)
         {
             var inmueble = repo.ObtenerPorId(id);

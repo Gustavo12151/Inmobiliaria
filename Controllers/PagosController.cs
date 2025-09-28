@@ -9,12 +9,19 @@ namespace Inmobiliaria.Controllers
     public class PagosController : Controller
     {
         private readonly RepositorioPago repo;
+        private readonly RepositorioContrato repoContrato;
+        private readonly RepositorioUsuario repoUsuario;
 
         public PagosController(IConfiguration configuration)
         {
             repo = new RepositorioPago(configuration);
+            repoContrato = new RepositorioContrato(configuration);
+            repoUsuario = new RepositorioUsuario(configuration);
         }
 
+        // ================================
+        // LISTADO
+        // ================================
         public IActionResult Index()
         {
             var lista = repo.ObtenerTodos();
@@ -28,8 +35,23 @@ namespace Inmobiliaria.Controllers
             return View(pago);
         }
 
+        // ================================
+        // CREATE
+        // ================================
         public IActionResult Create()
         {
+            var usuario = repoUsuario.ObtenerPorUsuario(User.Identity!.Name!);
+            ViewBag.UsuarioActual = usuario?.NombreUsuario;
+
+            var contratos = repoContrato.ObtenerTodos()
+                .Select(c => new
+                {
+                    Id = c.Id,
+                    Descripcion = $"{c.Inmueble.Direccion} - {c.Inquilino.Apellido}, {c.Inquilino.Nombre}"
+                }).ToList();
+
+            ViewBag.Contratos = contratos;
+
             return View();
         }
 
@@ -38,29 +60,45 @@ namespace Inmobiliaria.Controllers
         public IActionResult Create(Pago pago)
         {
             if (!ModelState.IsValid)
-                return View(pago);
-
-            int usuarioId;
-            try
             {
-                usuarioId = int.Parse(User.Claims.First(c => c.Type == "Id").Value);
-            }
-            catch
-            {
-                ModelState.AddModelError("", "No se pudo determinar el Id del usuario.");
+                // Recargar datos si hay error
+                var usuario = repoUsuario.ObtenerPorUsuario(User.Identity!.Name!);
+                ViewBag.UsuarioActual = usuario?.NombreUsuario;
+                ViewBag.Contratos = repoContrato.ObtenerTodos()
+                    .Select(c => new
+                    {
+                        Id = c.Id,
+                        Descripcion = $"{c.Inmueble.Direccion} - {c.Inquilino.Apellido}, {c.Inquilino.Nombre}"
+                    }).ToList();
+
                 return View(pago);
             }
 
+            int usuarioId = int.Parse(User.Claims.First(c => c.Type == "Id").Value);
             pago.UsuarioCreadorId = usuarioId;
+
             repo.Alta(pago);
             TempData["Mensaje"] = "Pago registrado correctamente.";
             return RedirectToAction(nameof(Index));
         }
 
+        // ================================
+        // EDIT
+        // ================================
         public IActionResult Edit(int id)
         {
             var pago = repo.ObtenerPorId(id);
             if (pago == null) return NotFound();
+
+            var contratos = repoContrato.ObtenerTodos()
+                .Select(c => new
+                {
+                    Id = c.Id,
+                    Descripcion = $"{c.Inmueble.Direccion} - {c.Inquilino.Apellido}, {c.Inquilino.Nombre}"
+                }).ToList();
+
+            ViewBag.Contratos = contratos;
+
             return View(pago);
         }
 
@@ -71,14 +109,26 @@ namespace Inmobiliaria.Controllers
             if (id != pago.Id) return NotFound();
 
             if (!ModelState.IsValid)
+            {
+                ViewBag.Contratos = repoContrato.ObtenerTodos()
+                    .Select(c => new
+                    {
+                        Id = c.Id,
+                        Descripcion = $"{c.Inmueble.Direccion} - {c.Inquilino.Apellido}, {c.Inquilino.Nombre}"
+                    }).ToList();
+
                 return View(pago);
+            }
 
             repo.Modificacion(pago);
             TempData["Mensaje"] = "Pago modificado correctamente.";
             return RedirectToAction(nameof(Index));
         }
 
-        // GET Delete: solo para confirmación si quisieras
+        // ================================
+        // DELETE
+        // ================================
+        [Authorize(Roles = "Administrador")]
         public IActionResult Delete(int id)
         {
             var pago = repo.ObtenerPorId(id);
@@ -86,9 +136,9 @@ namespace Inmobiliaria.Controllers
             return View(pago);
         }
 
-        // POST Delete -> Anular pago
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrador")]
         public IActionResult DeleteConfirmed(int id)
         {
             int usuarioId = int.Parse(User.Claims.First(c => c.Type == "Id").Value);

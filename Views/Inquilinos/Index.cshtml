@@ -24,7 +24,9 @@
             <td>
                 <a asp-action="Details" asp-route-id="@i.Id" class="btn btn-info btn-sm">Detalles</a>
                 <a asp-action="Edit" asp-route-id="@i.Id" class="btn btn-warning btn-sm">Editar</a>
+                @if(User.IsInRole("Administrador")){
                 <a asp-action="Delete" asp-route-id="@i.Id" class="btn btn-danger btn-sm">Eliminar</a>
+                }
             </td>
         </tr>
     }
