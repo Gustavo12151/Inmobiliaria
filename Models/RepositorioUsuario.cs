@@ -6,9 +6,9 @@ namespace Inmobiliaria.Models
     {
         public RepositorioUsuario(IConfiguration configuration) : base(configuration) { }
 
-        // =========================
+      
         // CRUD BÁSICO
-        // =========================
+      
         public List<Usuario> ObtenerTodos()
         {
             var lista = new List<Usuario>();
@@ -25,7 +25,7 @@ namespace Inmobiliaria.Models
                         {
                             Id = reader.GetInt32("Id"),
                             NombreUsuario = reader.GetString("NombreUsuario"),
-                            Clave = reader.GetString("Clave"),
+                            Clave = reader.GetString("Clave"), // <- se guarda encriptada
                             Rol = reader.GetString("Rol"),
                             Avatar = reader["Avatar"]?.ToString()
                         });
@@ -52,7 +52,7 @@ namespace Inmobiliaria.Models
                         {
                             Id = reader.GetInt32("Id"),
                             NombreUsuario = reader.GetString("NombreUsuario"),
-                            Clave = reader.GetString("Clave"),
+                            Clave = reader.GetString("Clave"), // <- se guarda encriptada
                             Rol = reader.GetString("Rol"),
                             Avatar = reader["Avatar"]?.ToString()
                         };
@@ -67,12 +67,15 @@ namespace Inmobiliaria.Models
             int res = -1;
             using (var connection = GetConnection())
             {
+                // 🔐 Cifrar la clave antes de guardarla
+                string hashedPassword = BCrypt.Net.BCrypt.HashPassword(u.Clave);
+
                 string sql = @"INSERT INTO Usuarios (NombreUsuario, Clave, Rol, Avatar) 
                                VALUES (@nombreUsuario, @clave, @rol, @avatar)";
                 using (var command = new MySqlCommand(sql, connection))
                 {
                     command.Parameters.AddWithValue("@nombreUsuario", u.NombreUsuario);
-                    command.Parameters.AddWithValue("@clave", u.Clave);
+                    command.Parameters.AddWithValue("@clave", hashedPassword);
                     command.Parameters.AddWithValue("@rol", u.Rol);
                     command.Parameters.AddWithValue("@avatar", (object?)u.Avatar ?? DBNull.Value);
                     connection.Open();
@@ -88,13 +91,14 @@ namespace Inmobiliaria.Models
             int res = -1;
             using (var connection = GetConnection())
             {
+                // ⚠️ IMPORTANTE: no tocar la clave acá
+                // la clave se modifica solo desde CambiarClave()
                 string sql = @"UPDATE Usuarios 
-                               SET NombreUsuario=@nombreUsuario, Clave=@clave, Rol=@rol, Avatar=@avatar
+                               SET NombreUsuario=@nombreUsuario, Rol=@rol, Avatar=@avatar
                                WHERE Id=@id";
                 using (var command = new MySqlCommand(sql, connection))
                 {
                     command.Parameters.AddWithValue("@nombreUsuario", u.NombreUsuario);
-                    command.Parameters.AddWithValue("@clave", u.Clave);
                     command.Parameters.AddWithValue("@rol", u.Rol);
                     command.Parameters.AddWithValue("@avatar", (object?)u.Avatar ?? DBNull.Value);
                     command.Parameters.AddWithValue("@id", u.Id);
@@ -121,9 +125,9 @@ namespace Inmobiliaria.Models
             return res;
         }
 
-        // =========================
+        
         // LOGIN / PERFIL
-        // =========================
+     
         public Usuario? ObtenerPorUsuario(string nombreUsuario)
         {
             Usuario? usuario = null;
@@ -144,7 +148,7 @@ namespace Inmobiliaria.Models
                             {
                                 Id = reader.GetInt32("Id"),
                                 NombreUsuario = reader.GetString("NombreUsuario"),
-                                Clave = reader.GetString("Clave"),
+                                Clave = reader.GetString("Clave"), // <- encriptada
                                 Rol = reader["Rol"]?.ToString(),
                                 Avatar = reader["Avatar"]?.ToString()
                             };
@@ -174,25 +178,27 @@ namespace Inmobiliaria.Models
             }
         }
 
-        public void CambiarClave(int id, string nuevaClave)
+       public void CambiarClave(int id, string nuevaClave)
+{
+    using (var connection = GetConnection())
+    {
+        string sql = "UPDATE Usuarios SET Clave = @clave WHERE Id = @id";
+        using (var command = new MySqlCommand(sql, connection))
         {
-            using (var connection = GetConnection())
-            {
-                string sql = "UPDATE Usuarios SET Clave = @clave WHERE Id = @id";
-                using (var command = new MySqlCommand(sql, connection))
-                {
-                    command.Parameters.AddWithValue("@clave", nuevaClave);
-                    command.Parameters.AddWithValue("@id", id);
+            // Hashear la nueva contraseña aquí
+            string hashed = BCrypt.Net.BCrypt.HashPassword(nuevaClave);
 
-                    connection.Open();
-                    command.ExecuteNonQuery();
-                }
-            }
+            command.Parameters.AddWithValue("@clave", hashed);
+            command.Parameters.AddWithValue("@id", id);
+
+            connection.Open();
+            command.ExecuteNonQuery();
         }
+    }
+}
 
-        // =========================
-        // EMPLEADOS (solo Admin)
-        // =========================
+              // EMPLEADOS (solo Admin)
+        
         public List<Usuario> ObtenerEmpleados()
         {
             var lista = new List<Usuario>();
@@ -233,5 +239,52 @@ namespace Inmobiliaria.Models
                 }
             }
         }
+
+        //* VERIFICACIÓN DE LOGIN*/
+       
+       public bool VerificarLogin(string nombreUsuario, string claveIngresada, out Usuario? usuario)
+{
+    usuario = ObtenerPorUsuario(nombreUsuario);
+    if (usuario == null) return false;
+
+    var stored = usuario.Clave ?? string.Empty;
+
+    try
+    {
+        // Si parece un hash de BCrypt (ej. "$2a$...","$2b$...","$2y$...")
+        if (stored.StartsWith("$2"))
+        {
+            // Verifica el texto plano ingresado contra el hash guardado
+            return BCrypt.Net.BCrypt.Verify(claveIngresada, stored);
+        }
+
+        // Si no parece hash: contraseña en texto plano (compatibilidad heredada)
+        if (stored == claveIngresada)
+        {
+            // Migrar: guardar la nueva clave hasheada en la BD
+            // NOTA: CambiarClave() en el repo debe hashear la clave antes de guardar.
+            CambiarClave(usuario.Id, claveIngresada);
+
+            // refrescar el objeto usuario (opcional pero útil)
+            usuario = ObtenerPorId(usuario.Id);
+            return true;
+        }
+
+        return false;
+    }
+    catch (Exception)
+    {
+        // Si BCrypt lanza por algún motivo (salt inválido u otro), intentar fallback seguro:
+        // comparar texto plano (solo como último recurso) y migrar si coincide.
+        if (stored == claveIngresada)
+        {
+            CambiarClave(usuario.Id, claveIngresada);
+            usuario = ObtenerPorId(usuario.Id);
+            return true;
+        }
+        return false;
+    }
+}
+
     }
 }

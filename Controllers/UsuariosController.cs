@@ -25,33 +25,36 @@ namespace Inmobiliaria.Controllers
         public IActionResult Login() => View();
 
         [HttpPost]
-        public async Task<IActionResult> Login(string nombreUsuario, string clave)
-        {
-            var usuario = repo.ObtenerPorUsuario(nombreUsuario);
+public async Task<IActionResult> Login(string nombreUsuario, string clave)
+{
+    if (!repo.VerificarLogin(nombreUsuario, clave, out var usuario) || usuario == null)
+    {
+        ViewBag.Error = "Usuario o contraseña incorrectos";
+        return View();
+    }
 
-            if (usuario == null || usuario.Clave != clave)
-            {
-                ViewBag.Error = "Usuario o contraseña incorrectos";
-                return View();
-            }
+    var claims = new List<Claim>
+    {
+        new Claim(ClaimTypes.Name, usuario.NombreUsuario ?? ""),
+        new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
+        new Claim(ClaimTypes.Role, usuario.Rol ?? "Empleado"),
+        new Claim("Avatar", usuario.Avatar ?? "")
+    };
 
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, usuario.NombreUsuario ?? ""),
-                new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
-                new Claim(ClaimTypes.Role, usuario.Rol ?? "Empleado"),
-                new Claim("Avatar", usuario.Avatar ?? "")
-            };
+    var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
-            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+    await HttpContext.SignInAsync(
+        CookieAuthenticationDefaults.AuthenticationScheme,
+        new ClaimsPrincipal(claimsIdentity)
+    );
 
-            await HttpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(claimsIdentity)
-            );
+    TempData["Mensaje"] = "Has iniciado sesión correctamente.";
+    return RedirectToAction("Index", "Home");
+}
 
-            return RedirectToAction("Index", "Home");
-        }
+
+
+
 
         [Authorize]
         public async Task<IActionResult> Logout()
@@ -83,86 +86,80 @@ namespace Inmobiliaria.Controllers
             return View(usuario);
         }
 
-     [Authorize]
-[HttpPost]
-[ValidateAntiForgeryToken]
-public async Task<IActionResult> EditarPerfil(Usuario usuario, IFormFile? avatarFile)
-{
-    if (usuario.Id <= 0) return NotFound();
-
-    var usuarioExistente = repo.ObtenerPorId(usuario.Id);
-    if (usuarioExistente == null) return NotFound();
-
-    // Mantener el rol
-    usuario.Rol = usuarioExistente.Rol;
-
-    // ✅ Si se sube un avatar, reemplazar
-    if (avatarFile != null && avatarFile.Length > 0)
-    {
-        var fileName = Guid.NewGuid() + Path.GetExtension(avatarFile.FileName);
-        var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "avatars", fileName);
-        using (var stream = new FileStream(path, FileMode.Create))
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditarPerfil(Usuario usuario, IFormFile? avatarFile)
         {
-            await avatarFile.CopyToAsync(stream);
+            if (usuario.Id <= 0) return NotFound();
+
+            var usuarioExistente = repo.ObtenerPorId(usuario.Id);
+            if (usuarioExistente == null) return NotFound();
+
+            usuario.Rol = usuarioExistente.Rol;
+
+            if (avatarFile != null && avatarFile.Length > 0)
+            {
+                var fileName = Guid.NewGuid() + Path.GetExtension(avatarFile.FileName);
+                var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "avatars", fileName);
+                using (var stream = new FileStream(path, FileMode.Create))
+                {
+                    await avatarFile.CopyToAsync(stream);
+                }
+                usuario.Avatar = "/avatars/" + fileName;
+            }
+            else
+            {
+                usuario.Avatar = usuarioExistente.Avatar;
+            }
+
+            repo.Modificacion(usuario);
+
+            // 🔄 refrescar claims
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, usuario.NombreUsuario ?? ""),
+                new Claim(ClaimTypes.Role, usuario.Rol ?? "Empleado"),
+                new Claim("Avatar", usuario.Avatar ?? "")
+            };
+            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(claimsIdentity)
+            );
+
+            TempData["Mensaje"] = "Perfil actualizado con éxito";
+            return RedirectToAction("Index", "Home");
         }
-        usuario.Avatar = "/avatars/" + fileName;
-    }
-    else
-    {
-        // ✅ Si no se sube avatar, conservar el existente
-        usuario.Avatar = usuarioExistente.Avatar;
-    }
-
-    repo.Modificacion(usuario);
-
-    // Refrescar claims
-    var claims = new List<Claim>
-    {
-        new Claim(ClaimTypes.Name, usuario.NombreUsuario ?? ""),
-        new Claim(ClaimTypes.Role, usuario.Rol ?? "Empleado"),
-        new Claim("Avatar", usuario.Avatar ?? "")
-    };
-    var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-
-    await HttpContext.SignInAsync(
-        CookieAuthenticationDefaults.AuthenticationScheme,
-        new ClaimsPrincipal(claimsIdentity)
-    );
-
-    TempData["Mensaje"] = "Perfil actualizado con éxito";
-    return RedirectToAction("Index", "Home");
-}
-
 
         [Authorize]
-[HttpPost]
-[ValidateAntiForgeryToken]
-public async Task<IActionResult> EliminarAvatar(int id)
-{
-    var usuario = repo.ObtenerPorId(id);
-    if (usuario == null) return NotFound();
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EliminarAvatar(int id)
+        {
+            var usuario = repo.ObtenerPorId(id);
+            if (usuario == null) return NotFound();
 
-    usuario.Avatar = "/avatars/default.png"; // 🔹 Avatar por defecto
-    repo.Modificacion(usuario);
+            usuario.Avatar = "/avatars/default.png";
+            repo.Modificacion(usuario);
 
-    // Refrescar claims
-    var claims = new List<Claim>
-    {
-        new Claim(ClaimTypes.Name, usuario.NombreUsuario ?? ""),
-        new Claim(ClaimTypes.Role, usuario.Rol ?? "Empleado"),
-        new Claim("Avatar", usuario.Avatar ?? "")
-    };
-    var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, usuario.NombreUsuario ?? ""),
+                new Claim(ClaimTypes.Role, usuario.Rol ?? "Empleado"),
+                new Claim("Avatar", usuario.Avatar ?? "")
+            };
+            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
-    await HttpContext.SignInAsync(
-        CookieAuthenticationDefaults.AuthenticationScheme,
-        new ClaimsPrincipal(claimsIdentity)
-    );
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(claimsIdentity)
+            );
 
-    TempData["Mensaje"] = "Avatar eliminado correctamente";
-    return RedirectToAction("Index", "Home");
-}
-
+            TempData["Mensaje"] = "Avatar eliminado correctamente";
+            return RedirectToAction("Index", "Home");
+        }
 
         [Authorize]
         [HttpGet]
@@ -173,26 +170,55 @@ public async Task<IActionResult> EliminarAvatar(int id)
             return View(usuario);
         }
 
-        [Authorize]
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult CambiarClave(int id, string claveActual, string nuevaClave)
+       [Authorize]
+[HttpPost]
+[ValidateAntiForgeryToken]
+public IActionResult CambiarClave(int id, string claveActual, string nuevaClave)
+{
+    var usuario = repo.ObtenerPorId(id);
+    if (usuario == null) return NotFound();
+
+    // Seguridad: solo el propio usuario o admin pueden cambiar esta contraseña
+    var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    if (!User.IsInRole("Administrador") && currentUserId != usuario.Id.ToString())
+    {
+        return Forbid();
+    }
+
+    bool claveValida = false;
+
+    try
+    {
+        // Si la clave guardada parece un hash BCrypt (ej: $2a$...), usamos Verify
+        if (!string.IsNullOrEmpty(usuario.Clave) && usuario.Clave.StartsWith("$2"))
         {
-            var usuario = repo.ObtenerPorId(id);
-            if (usuario == null) return NotFound();
-
-            if (usuario.Clave != claveActual)
-            {
-                TempData["Error"] = "La clave actual es incorrecta";
-                return RedirectToAction("CambiarClave", new { id });
-            }
-
-            usuario.Clave = nuevaClave;
-            repo.Modificacion(usuario);
-
-            TempData["Mensaje"] = "Contraseña cambiada con éxito.";
-            return RedirectToAction("Perfil", new { id });
+            claveValida = BCrypt.Net.BCrypt.Verify(claveActual, usuario.Clave);
         }
+        else
+        {
+            // Compatibilidad con contraseñas en texto plano (heredadas)
+            claveValida = usuario.Clave == claveActual;
+        }
+    }
+    catch
+    {
+        claveValida = false;
+    }
+
+    if (!claveValida)
+    {
+        TempData["Error"] = "La clave actual es incorrecta";
+        return RedirectToAction("CambiarClave", new { id });
+    }
+
+    // Guardar la nueva clave (repo.CambiarClave ya hace el hash antes de guardar)
+    repo.CambiarClave(id, nuevaClave);
+
+
+    TempData["Mensaje"] = "Contraseña cambiada con éxito.";
+    return RedirectToAction("Index", "Home");
+}
+
 
         // =========================
         // CRUD DE USUARIOS (solo admin)
