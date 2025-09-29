@@ -188,7 +188,7 @@ CREATE TABLE `usuarios` (
 
 INSERT INTO `usuarios` (`Id`, `NombreUsuario`, `Clave`, `Rol`, `Avatar`) VALUES
 (1, 'admin', '$2a$11$aOyzul4O2MJWnux55YKAeeEF7gc5C0bg6mGNM3gXGHSxaUyT44p4a', 'Administrador', '/avatars/b1366b0c-7a46-40af-8578-67ab8c6f1aa9.png'),
-(2, 'empleado1', '$2a$11$XfhvAE2ZzhBbokP3kICPc.vCwVAmmPnYoc0XaCWXHwY/Dahs1ceIu', 'Empleado', '/avatars/5a0b763a-1ace-4295-b89f-d05f8218ff52.png');
+(2, 'empleado2', '$2a$11$XfhvAE2ZzhBbokP3kICPc.vCwVAmmPnYoc0XaCWXHwY/Dahs1ceIu', 'Empleado', '/avatars/5a0b763a-1ace-4295-b89f-d05f8218ff52.png');
 
 --
 -- Índices para tablas volcadas
