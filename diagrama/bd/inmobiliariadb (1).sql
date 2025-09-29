@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 27-09-2025 a las 03:49:47
+-- Tiempo de generación: 29-09-2025 a las 23:51:52
 -- Versión del servidor: 10.4.28-MariaDB
 -- Versión de PHP: 8.2.4
 
@@ -33,18 +33,19 @@ CREATE TABLE `contratos` (
   `InquilinoId` int(11) NOT NULL,
   `FechaInicio` date NOT NULL,
   `FechaFin` date NOT NULL,
+  `FechaTerminacionAnticipada` date DEFAULT NULL,
   `MontoMensual` decimal(10,2) NOT NULL,
+  `MultaCalculada` decimal(10,2) DEFAULT NULL,
   `UsuarioCreadorId` int(11) NOT NULL,
-  `UsuarioFinalizadorId` int(11) DEFAULT NULL
+  `UsuarioFinalizadorId` int(11) DEFAULT NULL,
+  `EstadoContrato` varchar(20) NOT NULL DEFAULT 'Vigente'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `contratos`
 --
 
-INSERT INTO `contratos` (`Id`, `InmuebleId`, `InquilinoId`, `FechaInicio`, `FechaFin`, `MontoMensual`, `UsuarioCreadorId`, `UsuarioFinalizadorId`) VALUES
-(1, 1, 1, '2025-09-26', '2025-09-28', 123.00, 2, 1),
-(2, 2, 2, '2025-09-26', '2025-09-30', 456.00, 2, 2);
+
 
 -- --------------------------------------------------------
 
@@ -68,8 +69,10 @@ CREATE TABLE `inmuebles` (
 --
 
 INSERT INTO `inmuebles` (`Id`, `Direccion`, `Ambientes`, `Superficie`, `Precio`, `Estado`, `PropietarioId`, `TipoInmuebleId`) VALUES
-(1, 'Av. San Martín 123', 3, 75.50, 55000.00, 'Disponible', 1, 1),
-(2, 'Belgrano 456', 4, 120.00, 95000.00, 'Disponible', 2, 2);
+(1, 'Av. San Martín 123', 4, 75.50, 55000.00, 'Disponible', 1, 1),
+(2, 'Belgrano 456', 4, 120.00, 95000.00, 'Disponible', 2, 2),
+(4, 'Belgrano 890', 5, 400.00, 56000.00, 'Disponible', 5, 2),
+(6, 'Pedernera 1500', 2, 100.00, 32000.00, 'Disponible', 2, 1);
 
 -- --------------------------------------------------------
 
@@ -91,7 +94,9 @@ CREATE TABLE `inquilinos` (
 
 INSERT INTO `inquilinos` (`Id`, `DNI`, `Nombre`, `Apellido`, `Contacto`) VALUES
 (1, '29345000', 'Carlos', 'López', 'carlos.lopez@mail.com'),
-(2, '30456789', 'Laura', 'Martínez', 'laura.martinez@mail.com');
+(2, '30456789', 'Laura', 'Martínez', 'laura.martinez@mail.com'),
+(3, '12456987', 'Monica', 'Diaz', 'monidiaz@diaz'),
+(4, '32456789', 'Luis', 'Flores', 'flores@f');
 
 -- --------------------------------------------------------
 
@@ -105,9 +110,18 @@ CREATE TABLE `pagos` (
   `NumeroPago` int(11) NOT NULL,
   `FechaPago` date NOT NULL,
   `Importe` decimal(10,2) NOT NULL,
+  `Concepto` varchar(255) DEFAULT NULL,
   `UsuarioCreadorId` int(11) NOT NULL,
-  `UsuarioAnuladorId` int(11) DEFAULT NULL
+  `UsuarioAnuladorId` int(11) DEFAULT NULL,
+  `TipoPago` varchar(20) NOT NULL DEFAULT 'Alquiler',
+  `Estado` varchar(20) NOT NULL DEFAULT 'Activo'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `pagos`
+--
+
+
 
 -- --------------------------------------------------------
 
@@ -130,7 +144,9 @@ CREATE TABLE `propietarios` (
 INSERT INTO `propietarios` (`Id`, `DNI`, `Nombre`, `Apellido`, `Contacto`) VALUES
 (1, '30123456', 'Juan', 'Pérez', 'juan.perez@mail.com'),
 (2, '30234567', 'Ana', 'Gómez', 'ana.gomez@mail.com'),
-(3, '29345678', 'Carlos', 'López', 'carlos.lopez@mail.com');
+(3, '29345679', 'Carlos', 'López', 'carlos.lopez@mail.com'),
+(4, '78456123', 'Juan', 'Perez', 'Jp@jp'),
+(5, '45678900', 'Pepe', 'Ruiz', 'ruiz@tuiz');
 
 -- --------------------------------------------------------
 
@@ -171,8 +187,8 @@ CREATE TABLE `usuarios` (
 --
 
 INSERT INTO `usuarios` (`Id`, `NombreUsuario`, `Clave`, `Rol`, `Avatar`) VALUES
-(1, 'admin', 'admin123', 'Administrador', '/avatars/mujer (1).png'),
-(2, 'empleado2', '123', 'Empleado', '/avatars/hombre.png');
+(1, 'admin', '$2a$11$aOyzul4O2MJWnux55YKAeeEF7gc5C0bg6mGNM3gXGHSxaUyT44p4a', 'Administrador', '/avatars/b1366b0c-7a46-40af-8578-67ab8c6f1aa9.png'),
+(2, 'empleado1', '$2a$11$XfhvAE2ZzhBbokP3kICPc.vCwVAmmPnYoc0XaCWXHwY/Dahs1ceIu', 'Empleado', '/avatars/5a0b763a-1ace-4295-b89f-d05f8218ff52.png');
 
 --
 -- Índices para tablas volcadas
@@ -239,31 +255,31 @@ ALTER TABLE `usuarios`
 -- AUTO_INCREMENT de la tabla `contratos`
 --
 ALTER TABLE `contratos`
-  MODIFY `Id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `Id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT de la tabla `inmuebles`
 --
 ALTER TABLE `inmuebles`
-  MODIFY `Id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `Id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT de la tabla `inquilinos`
 --
 ALTER TABLE `inquilinos`
-  MODIFY `Id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `Id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de la tabla `pagos`
 --
 ALTER TABLE `pagos`
-  MODIFY `Id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `Id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT de la tabla `propietarios`
 --
 ALTER TABLE `propietarios`
-  MODIFY `Id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `Id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT de la tabla `tiposinmuebles`

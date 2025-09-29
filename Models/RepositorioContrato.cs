@@ -265,21 +265,26 @@ namespace Inmobiliaria.Models
         public int Baja(int id)
         {
             int res = -1;
-
-            using (var connection = GetConnection())
+            try
             {
-                string sql = "DELETE FROM Contratos WHERE Id=@id";
-                using (var command = new MySqlCommand(sql, connection))
+                using (var connection = GetConnection())
                 {
-                    command.Parameters.AddWithValue("@id", id);
-                    connection.Open();
-                    res = command.ExecuteNonQuery();
+                    string sql = "DELETE FROM Contratos WHERE Id=@id";
+                    using (var command = new MySqlCommand(sql, connection))
+                    {
+                        command.Parameters.AddWithValue("@id", id);
+                        connection.Open();
+                        res = command.ExecuteNonQuery();
+                    }
                 }
             }
-
+            catch (MySqlException ex)
+            {
+                // Guardar ex.Message en logs para depurar
+                throw new Exception("Error al eliminar contrato: " + ex.Message);
+            }
             return res;
         }
-
         // =========================
         // LÓGICA ADICIONAL
         // =========================
@@ -306,5 +311,124 @@ namespace Inmobiliaria.Models
             connection.Open();
             return Convert.ToInt32(command.ExecuteScalar()) > 0;
         }
+
+
+        public List<Contrato> ObtenerVigentes()
+        {
+            var lista = new List<Contrato>();
+            using (var connection = GetConnection())
+            {
+                string sql = "SELECT * FROM Contratos WHERE EstadoContrato='Vigente'";
+                using (var command = new MySqlCommand(sql, connection))
+                {
+                    connection.Open();
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            lista.Add(new Contrato
+                            {
+                                Id = reader.GetInt32("Id"),
+                                InmuebleId = reader.GetInt32("InmuebleId"),
+                                InquilinoId = reader.GetInt32("InquilinoId"),
+                                UsuarioCreadorId = reader.GetInt32("UsuarioCreadorId"),
+                                UsuarioFinalizadorId = reader.IsDBNull(reader.GetOrdinal("UsuarioFinalizadorId"))
+                                                        ? (int?)null
+                                                        : reader.GetInt32("UsuarioFinalizadorId"),
+                                FechaInicio = reader.GetDateTime("FechaInicio"),
+                                FechaFin = reader.GetDateTime("FechaFin"),
+                                FechaTerminacionAnticipada = reader.IsDBNull(reader.GetOrdinal("FechaTerminacionAnticipada"))
+                                                             ? (DateTime?)null
+                                                             : reader.GetDateTime("FechaTerminacionAnticipada"),
+                                MontoMensual = reader.GetDecimal("MontoMensual"),
+                                MultaCalculada = reader.IsDBNull(reader.GetOrdinal("MultaCalculada"))
+                                                 ? (decimal?)null
+                                                 : reader.GetDecimal("MultaCalculada"),
+                                EstadoContrato = reader.GetString("EstadoContrato")
+                            });
+                        }
+                    }
+                }
+            }
+            return lista;
+        }
+
+        public int FinalizarAnticipado(int idContrato, DateTime fechaTerminacion, int usuarioId)
+        {
+            var contrato = ObtenerPorId(idContrato);
+            if (contrato == null) throw new Exception("Contrato no encontrado");
+
+            // 🔹 Calcular duración y meses cumplidos
+            double mesesTotales = ((contrato.FechaFin - contrato.FechaInicio).Days) / 30.0;
+            double mesesCumplidos = ((fechaTerminacion - contrato.FechaInicio).Days) / 30.0;
+
+            // 🔹 Calcular multa
+            decimal multa = 0;
+            if (mesesCumplidos < mesesTotales / 2)
+                multa = contrato.MontoMensual * 2;
+            else
+                multa = contrato.MontoMensual;
+
+            // 🔹 Calcular deuda de meses restantes
+            int mesesRestantes = (int)Math.Ceiling(mesesTotales - mesesCumplidos);
+            decimal deuda = mesesRestantes * contrato.MontoMensual;
+
+            // 🔹 Actualizar contrato
+            contrato.FechaTerminacionAnticipada = fechaTerminacion;
+            contrato.MultaCalculada = multa;
+            contrato.EstadoContrato = "Finalizado anticipadamente";
+
+            // Guardamos al usuario que finaliza
+            contrato.UsuarioFinalizadorId = usuarioId;
+
+            using (var connection = GetConnection())
+            {
+                string sql = @"
+            UPDATE Contratos
+            SET 
+                FechaTerminacionAnticipada=@fechaTerm,
+                MultaCalculada=@multa,
+                EstadoContrato=@estado,
+                UsuarioFinalizadorId=@usuarioFinalizador
+            WHERE Id=@id
+        ";
+                using (var command = new MySqlCommand(sql, connection))
+                {
+                    command.Parameters.AddWithValue("@fechaTerm", contrato.FechaTerminacionAnticipada);
+                    command.Parameters.AddWithValue("@multa", contrato.MultaCalculada);
+                    command.Parameters.AddWithValue("@estado", contrato.EstadoContrato);
+                    command.Parameters.AddWithValue("@usuarioFinalizador", contrato.UsuarioFinalizadorId);
+                    command.Parameters.AddWithValue("@id", contrato.Id);
+
+                    connection.Open();
+                    return command.ExecuteNonQuery();
+                }
+            }
+        }
+
+public int FinalizarContrato(int idContrato, int usuarioId)
+{
+    int res = -1;
+    using (var connection = GetConnection())
+    {
+        string sql = @"
+            UPDATE Contratos
+            SET EstadoContrato = 'Finalizado',
+                UsuarioFinalizadorId = @usuarioId
+            WHERE Id = @idContrato";
+
+        using (var command = new MySqlCommand(sql, connection))
+        {
+            command.Parameters.AddWithValue("@usuarioId", usuarioId);
+            command.Parameters.AddWithValue("@idContrato", idContrato);
+
+            connection.Open();
+            res = command.ExecuteNonQuery();
+        }
+    }
+    return res;
+}
+
+
     }
 }

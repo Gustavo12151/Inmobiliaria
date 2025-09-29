@@ -4,22 +4,22 @@ namespace Inmobiliaria.Models
     {
         public int Id { get; set; }
 
-        // 🔹 Claves foráneas
         public int InmuebleId { get; set; }
         public int InquilinoId { get; set; }
         public int UsuarioCreadorId { get; set; }
-        public int? UsuarioFinalizadorId { get; set; }  // puede ser NULL
+        public int? UsuarioFinalizadorId { get; set; }
 
-        // 🔹 Propiedades propias
         public DateTime FechaInicio { get; set; }
         public DateTime FechaFin { get; set; }
+        public DateTime FechaFinOriginal { get; set; } // NUEVO: guarda la fecha original
+        public DateTime? FechaTerminacionAnticipada { get; set; }
         public decimal MontoMensual { get; set; }
+        public decimal? MultaCalculada { get; set; }
+        public string EstadoContrato { get; set; } = "Vigente"; // Vigente / Finalizado / Finalizado anticipadamente
 
-        // 🔹 Propiedades de navegación (no mapeadas directamente en la tabla)
         public Inmueble? Inmueble { get; set; }
         public Inquilino? Inquilino { get; set; }
         public Usuario? UsuarioCreador { get; set; }
         public Usuario? UsuarioFinalizador { get; set; }
     }
 }
-

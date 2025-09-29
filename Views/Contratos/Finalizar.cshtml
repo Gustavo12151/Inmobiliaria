@@ -7,23 +7,32 @@
 <h2>Finalizar Contrato</h2>
 <hr />
 
-<form asp-action="Finalizar" method="post">
-    <input type="hidden" asp-for="Id" />
-
-    <div class="mb-3">
-        <label class="form-label">Inquilino</label>
-        <input class="form-control" value="@Model.Inquilino.Nombre @Model.Inquilino.Apellido" readonly />
+@if (Model.UsuarioFinalizador != null)
+{
+    <div class="alert alert-info">
+        Este contrato ya fue finalizado y no se puede finalizar nuevamente.
     </div>
+}
+else
+{
+    <form asp-action="Finalizar" method="post">
+        <input type="hidden" asp-for="Id" />
 
-    <div class="mb-3">
-        <label class="form-label">Inmueble</label>
-        <input class="form-control" value="@Model.Inmueble.Direccion" readonly />
-    </div>
+        <div class="mb-3">
+            <label class="form-label">Inquilino</label>
+            <input class="form-control" value="@Model.Inquilino.Nombre @Model.Inquilino.Apellido" readonly />
+        </div>
 
-    <p class="alert alert-warning">
-        ¿Está seguro que desea <strong>finalizar</strong> este contrato?
-    </p>
+        <div class="mb-3">
+            <label class="form-label">Inmueble</label>
+            <input class="form-control" value="@Model.Inmueble.Direccion" readonly />
+        </div>
 
-    <button type="submit" class="btn btn-danger">Finalizar</button>
-    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
-</form>
+        <p class="alert alert-warning">
+            ¿Está seguro que desea <strong>finalizar</strong> este contrato?
+        </p>
+
+        <button type="submit" class="btn btn-danger">Finalizar</button>
+        <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+    </form>
+}

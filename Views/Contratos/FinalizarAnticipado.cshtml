@@ -1,0 +1,42 @@
+@model Inmobiliaria.Models.Contrato
+
+@{
+    ViewData["Title"] = "Finalizar Contrato Anticipadamente";
+}
+
+<h2>Finalizar Contrato Anticipadamente</h2>
+<hr />
+
+@if (Model.UsuarioFinalizador != null)
+{
+    <div class="alert alert-info">
+        Este contrato ya fue finalizado y no se puede finalizar anticipadamente.
+    </div>
+}
+else
+{
+    <div>
+        <p><strong>Inquilino:</strong> @Model.Inquilino?.Nombre @Model.Inquilino?.Apellido</p>
+        <p><strong>Inmueble:</strong> @Model.Inmueble?.Direccion</p>
+        <p><strong>Fecha Inicio:</strong> @Model.FechaInicio.ToShortDateString()</p>
+        <p><strong>Fecha Fin Original:</strong> @Model.FechaFin.ToShortDateString()</p>
+        <p><strong>Monto Mensual:</strong> @Model.MontoMensual</p>
+        <hr />
+        <p><strong>Meses restantes:</strong> @(ViewBag.Deuda / Model.MontoMensual)</p>
+        <p><strong>Multa calculada:</strong> @Model.MultaCalculada</p>
+        <p><strong>Total a pagar:</strong> @ViewBag.Total</p>
+    </div>
+
+    <form asp-action="FinalizarAnticipado" method="post">
+        <input type="hidden" name="id" value="@Model.Id" />
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="pagarAhora" value="true" id="pagarAhora">
+            <label class="form-check-label" for="pagarAhora">
+                Pagar multa y deuda ahora
+            </label>
+        </div>
+        <button type="submit" class="btn btn-primary mt-2">Finalizar Contrato</button>
+    </form>
+}
+
+<a asp-action="Index" class="btn btn-secondary mt-2">Volver</a>

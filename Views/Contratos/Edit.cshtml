@@ -3,6 +3,12 @@
 @{
     ViewData["Title"] = "Editar Contrato";
 }
+@if (Model.EstadoContrato != "Vigente")
+{
+    <div class="alert alert-info">
+        Este contrato ya fue finalizado y no se puede modificar.
+    </div>
+}
 
 <h2>Editar Contrato</h2>
 <hr />

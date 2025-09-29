@@ -34,7 +34,6 @@
             <th>Fecha Fin</th>
             <th>Monto Mensual</th>
 
-            @* Solo se muestran estas columnas si es administrador *@
             @if (esAdmin)
             {
                 <th>Usuario Creador</th>
@@ -49,7 +48,7 @@
         {
             <tr>
                 <td>@contrato.Id</td>
-                <td>@contrato.Inquilino?.Nombre</td>
+                <td>@contrato.Inquilino?.Nombre @contrato.Inquilino?.Apellido</td>
                 <td>@contrato.Inmueble?.Direccion</td>
                 <td>@contrato.FechaInicio.ToString("dd/MM/yyyy")</td>
                 <td>@contrato.FechaFin.ToString("dd/MM/yyyy")</td>
@@ -73,10 +72,16 @@
                 <td>
                     <a asp-action="Details" asp-route-id="@contrato.Id" class="btn btn-info btn-sm">Ver</a>
 
-                    @* Solo mostrar Finalizar si NO está finalizado *@
-                    @if (contrato.UsuarioFinalizador == null)
+                    @* Botón Finalizar: si no está finalizado y la fecha fin ya pasó *@
+                    @if (contrato.UsuarioFinalizador == null && contrato.FechaFin <= DateTime.Today)
                     {
                         <a asp-action="Finalizar" asp-route-id="@contrato.Id" class="btn btn-warning btn-sm">Finalizar</a>
+                    }
+
+                    @* Botón Finalizar Anticipado: si no está finalizado y la fecha fin aún no pasó *@
+                    @if (contrato.UsuarioFinalizador == null && contrato.FechaFin > DateTime.Today)
+                    {
+                        <a asp-action="FinalizarAnticipado" asp-route-id="@contrato.Id" class="btn btn-warning btn-sm">Finalizar Anticipadamente</a>
                     }
 
                     @if (esAdmin)

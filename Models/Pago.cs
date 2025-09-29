@@ -9,11 +9,14 @@ namespace Inmobiliaria.Models
         public DateTime FechaPago { get; set; }
         public decimal Importe { get; set; }
 
+        public string? Concepto { get; set; }   // Nuevo campo
+        public string Estado { get; set; } = "Activo"; // Activo / Anulado
+
         // Auditoría
         public int UsuarioCreadorId { get; set; }
         public int? UsuarioAnuladorId { get; set; }
 
-        // Nombres de usuario (para mostrar en la vista)
+        // Nombres de usuario
         public string? UsuarioCreador { get; set; }
         public string? UsuarioAnulador { get; set; }
     }

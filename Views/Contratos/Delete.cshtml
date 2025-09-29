@@ -1,24 +1,54 @@
 @model Inmobiliaria.Models.Contrato
+
 @{
     ViewData["Title"] = "Eliminar Contrato";
+    bool esAdmin = User.IsInRole("Administrador"); // verificamos rol
 }
 
 <h2>@ViewData["Title"]</h2>
 
-<div class="alert alert-warning">
-    ¿Está seguro que desea eliminar este contrato?
-</div>
+@if (!esAdmin)
+{
+    <div class="alert alert-danger">
+        No tiene permisos para eliminar este contrato.
+    </div>
+}
+else
+{
+    <div class="alert alert-warning">
+        ¿Está seguro que desea eliminar este contrato?
+    </div>
 
-<table class="table table-bordered">
-    <tr><th>Inquilino</th><td>@Model.Inquilino.Nombre @Model.Inquilino.Apellido</td></tr>
-    <tr><th>Inmueble</th><td>@Model.Inmueble.Direccion</td></tr>
-    <tr><th>Fecha Inicio</th><td>@Model.FechaInicio.ToString("yyyy-MM-dd")</td></tr>
-    <tr><th>Fecha Fin</th><td>@Model.FechaFin.ToString("yyyy-MM-dd")</td></tr>
-    <tr><th>Monto Mensual</th><td>@Model.MontoMensual</td></tr>
-</table>
+    <table class="table table-bordered">
+        <tr><th>Inquilino</th><td>@Model.Inquilino?.Nombre @Model.Inquilino?.Apellido</td></tr>
+        <tr><th>Inmueble</th><td>@Model.Inmueble?.Direccion</td></tr>
+        <tr><th>Fecha Inicio</th><td>@Model.FechaInicio.ToString("yyyy-MM-dd")</td></tr>
+        <tr><th>Fecha Fin</th><td>@Model.FechaFin.ToString("yyyy-MM-dd")</td></tr>
+        <tr><th>Monto Mensual</th><td>$ @Model.MontoMensual.ToString("N2")</td></tr>
+        <tr><th>Estado del Contrato</th>
+            <td>
+                @if (Model.UsuarioFinalizador != null)
+                {
+                    @if (Model.FechaTerminacionAnticipada.HasValue)
+                    {
+                        <span class="badge bg-warning">Finalizado Anticipadamente</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success">Finalizado</span>
+                    }
+                }
+                else
+                {
+                    <span class="badge bg-primary">Vigente</span>
+                }
+            </td>
+        </tr>
+    </table>
 
-<form asp-action="DeleteConfirmed" method="post">
-    <input type="hidden" asp-for="Id" />
-    <button type="submit" class="btn btn-danger">Eliminar</button>
-    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
-</form>
+    <form asp-action="DeleteConfirmed" method="post">
+        <input type="hidden" asp-for="Id" />
+        <button type="submit" class="btn btn-danger">Eliminar</button>
+        <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+    </form>
+}

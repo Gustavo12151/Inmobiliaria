@@ -13,9 +13,12 @@ namespace Inmobiliaria.Controllers
         private readonly RepositorioInmueble repoInmueble;
         private readonly RepositorioInquilino repoInquilino;
         private readonly RepositorioUsuario repoUsuario;
+        private readonly IConfiguration _configuration;
+
 
         public ContratosController(IConfiguration configuration)
         {
+             _configuration = configuration;
             repo = new RepositorioContrato(configuration);
             repoInmueble = new RepositorioInmueble(configuration);
             repoInquilino = new RepositorioInquilino(configuration);
@@ -37,7 +40,7 @@ namespace Inmobiliaria.Controllers
         }
 
 
-        
+
         public IActionResult Details(int id)
         {
             var contrato = repo.ObtenerPorId(id);
@@ -152,25 +155,25 @@ namespace Inmobiliaria.Controllers
 
 
         // ======================================
-// FINALIZAR CONTRATO (solo guarda UsuarioFinalizadorId)
-// ======================================
-[Authorize]
-public IActionResult Finalizar(int id)
-{
-    var contrato = repo.ObtenerPorId(id);
-    if (contrato == null) return NotFound();
+        // FINALIZAR CONTRATO (solo guarda UsuarioFinalizadorId)
+        // ======================================
+        [Authorize]
+        public IActionResult Finalizar(int id)
+        {
+            var contrato = repo.ObtenerPorId(id);
+            if (contrato == null) return NotFound();
 
-    // 🔒 Verificar si ya está finalizado
-    if (contrato.UsuarioFinalizador != null)
-    {
-        TempData["Error"] = "El contrato ya fue finalizado anteriormente.";
-        return RedirectToAction(nameof(Index));
-    }
+            // 🔒 Verificar si ya está finalizado
+            if (contrato.UsuarioFinalizador != null)
+            {
+                TempData["Error"] = "El contrato ya fue finalizado anteriormente.";
+                return RedirectToAction(nameof(Index));
+            }
 
-    return View(contrato); // mostramos datos del contrato
-}
+            return View(contrato); // mostramos datos del contrato
+        }
 
-[HttpPost]
+        [HttpPost]
 [ValidateAntiForgeryToken]
 [Authorize]
 public IActionResult Finalizar(int id, Contrato contrato)
@@ -178,21 +181,27 @@ public IActionResult Finalizar(int id, Contrato contrato)
     var contratoDb = repo.ObtenerPorId(id);
     if (contratoDb == null) return NotFound();
 
-    // 🔒 Bloqueo doble finalización
     if (contratoDb.UsuarioFinalizador != null)
     {
         TempData["Error"] = "El contrato ya está finalizado.";
         return RedirectToAction(nameof(Index));
     }
 
-    // Guardamos quién finalizó el contrato
     var usuario = repoUsuario.ObtenerPorUsuario(User.Identity!.Name!);
-    contratoDb.UsuarioFinalizadorId = usuario?.Id;
 
     try
     {
-        repo.Modificacion(contratoDb);
-        TempData["Mensaje"] = "Contrato finalizado correctamente.";
+        // 🔹 Verificamos si corresponde marcarlo como finalizado normal
+        if (DateTime.Today >= contratoDb.FechaFin)
+        {
+            repo.FinalizarContrato(contratoDb.Id, usuario?.Id ?? 0);
+            TempData["Mensaje"] = "Contrato finalizado correctamente (cumplió su plazo).";
+        }
+        else
+        {
+            TempData["Error"] = "El contrato aún no llegó a su fecha de fin. Debe usar Finalizar Anticipado.";
+        }
+
         return RedirectToAction(nameof(Index));
     }
     catch (Exception ex)
@@ -201,6 +210,68 @@ public IActionResult Finalizar(int id, Contrato contrato)
         return RedirectToAction(nameof(Details), new { id });
     }
 }
+
+
+public IActionResult FinalizarAnticipado(int id)
+{
+    var contrato = repo.ObtenerPorId(id);
+    if (contrato == null) return NotFound();
+
+    if (contrato.EstadoContrato != "Vigente")
+    {
+        TempData["Error"] = "El contrato ya fue finalizado.";
+        return RedirectToAction(nameof(Index));
+    }
+
+    // Calcular multa y deuda para mostrar en la vista
+    double mesesTotales = ((contrato.FechaFin - contrato.FechaInicio).Days) / 30.0;
+    double mesesCumplidos = ((DateTime.Today - contrato.FechaInicio).Days) / 30.0;
+    contrato.MultaCalculada = mesesCumplidos < mesesTotales / 2 ? contrato.MontoMensual * 2 : contrato.MontoMensual;
+    int mesesRestantes = (int)Math.Ceiling(mesesTotales - mesesCumplidos);
+    ViewBag.Deuda = mesesRestantes * contrato.MontoMensual;
+    ViewBag.Total = ViewBag.Deuda + contrato.MultaCalculada;
+
+    return View(contrato);
+}
+
+[HttpPost]
+[ValidateAntiForgeryToken]
+public IActionResult FinalizarAnticipado(int id, bool pagarAhora)
+{
+    var contrato = repo.ObtenerPorId(id);
+    if (contrato == null) return NotFound();
+
+    var usuario = repoUsuario.ObtenerPorUsuario(User.Identity!.Name!);
+
+    // 🔹 Calcular nuevamente la multa (porque no la trae desde la vista)
+    double mesesTotales = ((contrato.FechaFin - contrato.FechaInicio).Days) / 30.0;
+    double mesesCumplidos = ((DateTime.Today - contrato.FechaInicio).Days) / 30.0;
+    contrato.MultaCalculada = mesesCumplidos < mesesTotales / 2 
+        ? contrato.MontoMensual * 2 
+        : contrato.MontoMensual;
+
+    // 🔹 Guardar la finalización anticipada
+    repo.FinalizarAnticipado(id, DateTime.Today, usuario?.Id ?? 0);
+
+    if (pagarAhora)
+    {
+        // Registrar el pago con multa
+        var pagoRepo = new RepositorioPago(_configuration);
+        pagoRepo.Alta(new Pago
+        {
+            ContratoId = contrato.Id,
+            Importe = contrato.MultaCalculada ?? 0, // ahora sí tiene valor
+            Concepto = "Alquiler/Multa",            // 👈 agregar concepto
+            FechaPago = DateTime.Today,
+            UsuarioCreadorId = usuario?.Id ?? 0,
+            Estado = "Pagado"
+        });
+    }
+
+    TempData["Mensaje"] = "Contrato finalizado anticipadamente.";
+    return RedirectToAction(nameof(Index));
+}
+
 
 
     }
