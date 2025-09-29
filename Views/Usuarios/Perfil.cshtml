@@ -39,6 +39,11 @@
     <button type="submit" class="btn btn-success">Guardar cambios</button>
     <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
 </form>
+<div class="mt-3">
+    <a asp-action="CambiarClave" asp-route-id="@Model.Id" class="btn btn-warning">
+        Cambiar Contraseña
+    </a>
+</div>
 
 <!-- Botón extra para eliminar avatar -->
 @if (!string.IsNullOrEmpty(Model.Avatar))

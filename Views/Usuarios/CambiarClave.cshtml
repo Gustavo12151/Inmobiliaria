@@ -4,30 +4,38 @@
     ViewData["Title"] = "Cambiar Contraseña";
 }
 
-<h2>Cambiar Contraseña</h2>
+<div class="container mt-4">
+    <h2>Cambiar Contraseña</h2>
+    <hr />
 
-@if (TempData["Mensaje"] != null)
-{
-    <div class="alert alert-success">@TempData["Mensaje"]</div>
-}
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger">@TempData["Error"]</div>
-}
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="alert alert-success">@TempData["Mensaje"]</div>
+    }
 
-<form asp-action="CambiarClave" asp-controller="Usuarios" method="post">
-    <input type="hidden" asp-for="Id" />
+    <form asp-action="CambiarClave" method="post">
+        <input type="hidden" asp-for="Id" />
 
-    <div class="mb-3">
-        <label class="form-label">Contraseña Actual</label>
-        <input type="password" name="claveActual" class="form-control" required />
-    </div>
+        <div class="form-group mb-3">
+            <label for="claveActual" class="form-label">Contraseña Actual</label>
+            <input type="password" name="claveActual" class="form-control" required />
+        </div>
 
-    <div class="mb-3">
-        <label class="form-label">Nueva Contraseña</label>
-        <input type="password" name="nuevaClave" class="form-control" required />
-    </div>
+        <div class="form-group mb-3">
+            <label for="nuevaClave" class="form-label">Nueva Contraseña</label>
+            <input type="password" name="nuevaClave" class="form-control" required />
+        </div>
 
-    <button type="submit" class="btn btn-primary">Actualizar Contraseña</button>
-    <a asp-action="Perfil" asp-route-id="@Model.Id" class="btn btn-secondary">Volver al Perfil</a>
-</form>
+        <div class="form-group mb-3">
+            <label for="confirmarClave" class="form-label">Confirmar Nueva Contraseña</label>
+            <input type="password" name="confirmarClave" class="form-control" required />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+        <a asp-action="Perfil" asp-route-id="@Model.Id" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>

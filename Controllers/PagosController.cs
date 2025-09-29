@@ -56,31 +56,37 @@ namespace Inmobiliaria.Controllers
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult Create(Pago pago)
-        {
-            if (!ModelState.IsValid)
-            {
-                // Recargar datos si hay error
-                var usuario = repoUsuario.ObtenerPorUsuario(User.Identity!.Name!);
-                ViewBag.UsuarioActual = usuario?.NombreUsuario;
-                ViewBag.Contratos = repoContrato.ObtenerTodos()
-                    .Select(c => new
-                    {
-                        Id = c.Id,
-                        Descripcion = $"{c.Inmueble.Direccion} - {c.Inquilino.Apellido}, {c.Inquilino.Nombre}"
-                    }).ToList();
+[ValidateAntiForgeryToken]
+public IActionResult Create(Pago pago)
+{
+    if (!ModelState.IsValid)
+    {
+        // Recargar combos si falla la validación
+        var contratos = repoContrato.ObtenerTodos()
+            .Select(c => new {
+                Id = c.Id,
+                Descripcion = $"{c.Inmueble.Direccion} - {c.Inquilino.Apellido}, {c.Inquilino.Nombre}"
+            }).ToList();
 
-                return View(pago);
-            }
+        ViewBag.Contratos = contratos;
+        return View(pago);
+    }
 
-            int usuarioId = int.Parse(User.Claims.First(c => c.Type == "Id").Value);
-            pago.UsuarioCreadorId = usuarioId;
+    // Recuperar el usuario actual por su nombre
+    var usuario = repoUsuario.ObtenerPorUsuario(User.Identity!.Name!);
+    if (usuario == null)
+    {
+        ModelState.AddModelError("", "No se pudo determinar el usuario actual.");
+        return View(pago);
+    }
 
-            repo.Alta(pago);
-            TempData["Mensaje"] = "Pago registrado correctamente.";
-            return RedirectToAction(nameof(Index));
-        }
+    pago.UsuarioCreadorId = usuario.Id;
+
+    repo.Alta(pago);
+    TempData["Mensaje"] = "Pago registrado correctamente.";
+    return RedirectToAction(nameof(Index));
+}
+
 
         // ================================
         // EDIT

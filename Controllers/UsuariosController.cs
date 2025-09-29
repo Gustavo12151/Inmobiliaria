@@ -159,58 +159,79 @@ namespace Inmobiliaria.Controllers
             return RedirectToAction("Index", "Home");
         }
 
-        [Authorize]
-        [HttpGet]
-        public IActionResult CambiarClave(int id)
+       [Authorize]
+[HttpGet]
+public IActionResult CambiarClave(int id)
+{
+    var usuario = repo.ObtenerPorId(id);
+    if (usuario == null) return NotFound();
+
+    // Si no es admin, solo puede cambiar su propia clave
+    var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    if (!User.IsInRole("Administrador") && currentUserId != usuario.Id.ToString())
+    {
+        return Forbid();
+    }
+
+    return View(usuario);
+}
+
+[Authorize]
+[HttpPost]
+[ValidateAntiForgeryToken]
+public IActionResult CambiarClave(int id, string claveActual, string nuevaClave, string confirmarClave)
+{
+    var usuario = repo.ObtenerPorId(id);
+    if (usuario == null) return NotFound();
+
+    var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    if (!User.IsInRole("Administrador") && currentUserId != usuario.Id.ToString())
+    {
+        return Forbid();
+    }
+
+    if (string.IsNullOrEmpty(nuevaClave) || string.IsNullOrEmpty(confirmarClave))
+    {
+        TempData["Error"] = "Debe ingresar y confirmar la nueva contraseña.";
+        return RedirectToAction("CambiarClave", new { id });
+    }
+
+    if (nuevaClave != confirmarClave)
+    {
+        TempData["Error"] = "La nueva contraseña y la confirmación no coinciden.";
+        return RedirectToAction("CambiarClave", new { id });
+    }
+
+    bool claveValida = false;
+    try
+    {
+        if (!string.IsNullOrEmpty(usuario.Clave) && usuario.Clave.StartsWith("$2"))
         {
-            var usuario = repo.ObtenerPorId(id);
-            if (usuario == null) return NotFound();
-            return View(usuario);
+            claveValida = BCrypt.Net.BCrypt.Verify(claveActual, usuario.Clave);
         }
-
-        [Authorize]
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult CambiarClave(int id, string claveActual, string nuevaClave)
+        else
         {
-            var usuario = repo.ObtenerPorId(id);
-            if (usuario == null) return NotFound();
-
-            var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!User.IsInRole("Administrador") && currentUserId != usuario.Id.ToString())
-            {
-                return Forbid();
-            }
-
-            bool claveValida = false;
-
-            try
-            {
-                if (!string.IsNullOrEmpty(usuario.Clave) && usuario.Clave.StartsWith("$2"))
-                {
-                    claveValida = BCrypt.Net.BCrypt.Verify(claveActual, usuario.Clave);
-                }
-                else
-                {
-                    claveValida = usuario.Clave == claveActual;
-                }
-            }
-            catch
-            {
-                claveValida = false;
-            }
-
-            if (!claveValida)
-            {
-                TempData["Error"] = "La clave actual es incorrecta";
-                return RedirectToAction("CambiarClave", new { id });
-            }
-
-            repo.CambiarClave(id, nuevaClave);
-
-            TempData["Mensaje"] = "Contraseña cambiada con éxito.";
-            return RedirectToAction("Index", "Home");
+            claveValida = usuario.Clave == claveActual;
         }
+    }
+    catch
+    {
+        claveValida = false;
+    }
+
+    if (!claveValida)
+    {
+        TempData["Error"] = "La clave actual es incorrecta.";
+        return RedirectToAction("CambiarClave", new { id });
+    }
+
+    // ✅ Guardar nueva clave cifrada
+    repo.CambiarClave(id, nuevaClave);
+
+    TempData["Mensaje"] = "Contraseña cambiada con éxito.";
+    return RedirectToAction("Perfil", new { id });
+}
+
 
         // =========================
         // CRUD DE USUARIOS (solo admin)

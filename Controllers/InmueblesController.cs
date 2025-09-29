@@ -86,30 +86,41 @@ namespace Inmobiliaria.Controllers
         // MÉTODOS DE EDICIÓN (UPDATE)
         // ======================================
 
-        [Authorize(Roles = "Administrador")]
-        public IActionResult Edit(int id)
-        {
-            var inmueble = repo.ObtenerPorId(id);
-            if (inmueble == null) return NotFound();
-            return View(inmueble);
-        }
+       [Authorize]
+public IActionResult Edit(int id)
+{
+    var inmueble = repo.ObtenerPorId(id);
+    if (inmueble == null) return NotFound();
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Administrador")]
-        public IActionResult Edit(int id, Inmueble inmueble)
-        {
-            if (id != inmueble.Id) return NotFound();
+    
+    ViewBag.Propietarios = new SelectList(repo.ObtenerPropietarios(), "Id", "NombreCompleto");
+    ViewBag.Tipos = new SelectList(repo.ObtenerTipos(), "Id", "Nombre");
 
-            if (ModelState.IsValid)
-            {
-                inmueble.Id = id;
-                repo.Modificacion(inmueble);
-                TempData["Mensaje"] = "Inmueble modificado correctamente.";
-                return RedirectToAction(nameof(Index));
-            }
-            return View(inmueble);
-        }
+    return View(inmueble);
+}
+
+[HttpPost]
+[ValidateAntiForgeryToken]
+[Authorize]
+public IActionResult Edit(int id, Inmueble inmueble)
+{
+    if (id != inmueble.Id) return NotFound();
+
+    if (ModelState.IsValid)
+    {
+        inmueble.Id = id;
+        repo.Modificacion(inmueble);
+        TempData["Mensaje"] = "Inmueble modificado correctamente.";
+        return RedirectToAction(nameof(Index));
+    }
+
+    
+    ViewBag.Propietarios = new SelectList(repo.ObtenerPropietarios(), "Id", "NombreCompleto", inmueble.IdPropietario);
+    ViewBag.Tipos = new SelectList(repo.ObtenerTipos(), "Id", "Nombre", inmueble.IdTipo);
+
+    return View(inmueble);
+}
+
 
         // ======================================
         // MÉTODOS DE ELIMINACIÓN (DELETE)

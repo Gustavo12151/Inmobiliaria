@@ -176,31 +176,40 @@ namespace Inmobiliaria.Models
 }
 
 
-        public int Modificacion(Inmueble i)
+       public int Modificacion(Inmueble i)
+{
+    int res = -1;
+    using (var connection = GetConnection())
+    {
+        string sql = @"
+            UPDATE Inmuebles
+            SET Direccion=@direccion, 
+                Ambientes=@ambientes, 
+                Superficie=@superficie, 
+                Precio=@precio, 
+                Estado=@estado,
+                PropietarioId=@propietarioId, 
+                TipoInmuebleId=@tipoInmuebleId
+            WHERE Id=@id";
+
+        using (var command = new MySqlCommand(sql, connection))
         {
-            int res = -1;
-            using (var connection = GetConnection())
-            {
-                string sql = @"UPDATE Inmuebles
-                               SET Direccion=@direccion, Ambientes=@ambientes, Superficie=@superficie, Estado=@estado,
-                                   Precio=@precio, IdPropietario=@idPropietario, IdTipo=@idTipo
-                               WHERE Id=@id";
-                using (var command = new MySqlCommand(sql, connection))
-                {
-                    command.Parameters.AddWithValue("@direccion", i.Direccion);
-                    command.Parameters.AddWithValue("@ambientes", i.Ambientes);
-                    command.Parameters.AddWithValue("@superficie", i.Superficie);
-                    command.Parameters.AddWithValue("@estado", i.Estado);
-                    command.Parameters.AddWithValue("@precio", i.Precio);
-                    command.Parameters.AddWithValue("@idPropietario", i.IdPropietario);
-                    command.Parameters.AddWithValue("@idTipo", i.IdTipo);
-                    command.Parameters.AddWithValue("@id", i.Id);
-                    connection.Open();
-                    res = command.ExecuteNonQuery();
-                }
-            }
-            return res;
+            command.Parameters.AddWithValue("@direccion", i.Direccion);
+            command.Parameters.AddWithValue("@ambientes", i.Ambientes);
+            command.Parameters.AddWithValue("@superficie", i.Superficie);
+            command.Parameters.AddWithValue("@precio", i.Precio);
+            command.Parameters.AddWithValue("@estado", i.Estado);
+            command.Parameters.AddWithValue("@propietarioId", i.IdPropietario);
+            command.Parameters.AddWithValue("@tipoInmuebleId", i.IdTipo);
+            command.Parameters.AddWithValue("@id", i.Id);
+
+            connection.Open();
+            res = command.ExecuteNonQuery();
         }
+    }
+    return res;
+}
+
 
         public int Baja(int id)
         {

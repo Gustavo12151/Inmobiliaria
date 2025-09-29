@@ -23,30 +23,27 @@
 
     <div class="form-group mb-3">
         <label asp-for="Superficie"></label>
-        <input asp-for="Superficie" class="form-control"/>
+        <input asp-for="Superficie" class="form-control" type="number" step="0.01" />
         <span asp-validation-for="Superficie" class="text-danger"></span>
     </div>
 
     <div class="form-group mb-3">
         <label asp-for="Precio"></label>
-        <input asp-for="Precio" class="form-control"/>
+        <input asp-for="Precio" class="form-control" type="number" step="0.01">
         <span asp-validation-for="Precio" class="text-danger"></span>
     </div>
 
     <div class="form-group mb-3">
         <label asp-for="IdPropietario"></label>
-        <select asp-for="IdPropietario" asp-items="@(new SelectList(ViewBag.Propietarios, "Id", "Nombre"))" class="form-control"></select>
+        <select asp-for="IdPropietario" asp-items="@(ViewBag.Propietarios as SelectList)" class="form-control"></select>
     </div>
 
     <div class="form-group mb-3">
         <label asp-for="IdTipo"></label>
-        <select asp-for="IdTipo" asp-items="@(new SelectList(ViewBag.Tipos, "Id", "Nombre"))" class="form-control"></select>
+        <select asp-for="IdTipo" asp-items="@(ViewBag.Tipos as SelectList)" class="form-control"></select>
     </div>
 
-    <div class="form-group mb-3">
-        <label asp-for="Estado"></label>
-        <input asp-for="Estado" class="form-control"/>
-    </div>
+
 
     <button type="submit" class="btn btn-primary">Guardar cambios</button>
     <a asp-action="Index" class="btn btn-secondary">Cancelar</a>

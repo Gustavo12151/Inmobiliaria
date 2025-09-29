@@ -10,8 +10,17 @@
 
 @if (TempData["Mensaje"] != null)
 {
-    <div class="alert alert-success">
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
         @TempData["Mensaje"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
     </div>
 }
 
@@ -63,11 +72,17 @@
 
                 <td>
                     <a asp-action="Details" asp-route-id="@contrato.Id" class="btn btn-info btn-sm">Ver</a>
-                    <a asp-action="Finalizar" asp-route-id="@contrato.Id" class="btn btn-warning btn-sm">Finalizar</a>
+
+                    @* Solo mostrar Finalizar si NO está finalizado *@
+                    @if (contrato.UsuarioFinalizador == null)
+                    {
+                        <a asp-action="Finalizar" asp-route-id="@contrato.Id" class="btn btn-warning btn-sm">Finalizar</a>
+                    }
 
                     @if (esAdmin)
                     {
                         <a asp-action="Edit" asp-route-id="@contrato.Id" class="btn btn-primary btn-sm">Editar</a>
+                        <a asp-action="Delete" asp-route-id="@contrato.Id" class="btn btn-danger btn-sm">Eliminar</a>
                     }
                 </td>
             </tr>

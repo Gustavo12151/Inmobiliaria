@@ -160,6 +160,13 @@ public IActionResult Finalizar(int id)
     var contrato = repo.ObtenerPorId(id);
     if (contrato == null) return NotFound();
 
+    // 🔒 Verificar si ya está finalizado
+    if (contrato.UsuarioFinalizador != null)
+    {
+        TempData["Error"] = "El contrato ya fue finalizado anteriormente.";
+        return RedirectToAction(nameof(Index));
+    }
+
     return View(contrato); // mostramos datos del contrato
 }
 
@@ -170,6 +177,13 @@ public IActionResult Finalizar(int id, Contrato contrato)
 {
     var contratoDb = repo.ObtenerPorId(id);
     if (contratoDb == null) return NotFound();
+
+    // 🔒 Bloqueo doble finalización
+    if (contratoDb.UsuarioFinalizador != null)
+    {
+        TempData["Error"] = "El contrato ya está finalizado.";
+        return RedirectToAction(nameof(Index));
+    }
 
     // Guardamos quién finalizó el contrato
     var usuario = repoUsuario.ObtenerPorUsuario(User.Identity!.Name!);
@@ -187,6 +201,7 @@ public IActionResult Finalizar(int id, Contrato contrato)
         return RedirectToAction(nameof(Details), new { id });
     }
 }
+
 
     }
 }
