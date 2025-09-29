@@ -4,38 +4,35 @@
     ViewData["Title"] = "Cambiar Contraseña";
 }
 
-<div class="container mt-4">
-    <h2>Cambiar Contraseña</h2>
-    <hr />
+<h2>Cambiar Contraseña</h2>
 
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger">@TempData["Error"]</div>
-    }
-    @if (TempData["Mensaje"] != null)
-    {
-        <div class="alert alert-success">@TempData["Mensaje"]</div>
-    }
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
 
-    <form asp-action="CambiarClave" method="post">
-        <input type="hidden" asp-for="Id" />
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">@TempData["Mensaje"]</div>
+}
 
-        <div class="form-group mb-3">
-            <label for="claveActual" class="form-label">Contraseña Actual</label>
-            <input type="password" name="claveActual" class="form-control" required />
-        </div>
+<form asp-action="CambiarClave" method="post">
+    <input type="hidden" name="id" value="@Model.Id" />
 
-        <div class="form-group mb-3">
-            <label for="nuevaClave" class="form-label">Nueva Contraseña</label>
-            <input type="password" name="nuevaClave" class="form-control" required />
-        </div>
+    <div class="mb-3">
+        <label for="claveActual" class="form-label">Contraseña actual</label>
+        <input type="password" class="form-control" id="claveActual" name="claveActual" required />
+    </div>
 
-        <div class="form-group mb-3">
-            <label for="confirmarClave" class="form-label">Confirmar Nueva Contraseña</label>
-            <input type="password" name="confirmarClave" class="form-control" required />
-        </div>
+    <div class="mb-3">
+        <label for="nuevaClave" class="form-label">Nueva contraseña</label>
+        <input type="password" class="form-control" id="nuevaClave" name="nuevaClave" required />
+    </div>
 
-        <button type="submit" class="btn btn-primary">Guardar cambios</button>
-        <a asp-action="Perfil" asp-route-id="@Model.Id" class="btn btn-secondary">Cancelar</a>
-    </form>
-</div>
+    <div class="mb-3">
+        <label for="confirmarClave" class="form-label">Confirmar nueva contraseña</label>
+        <input type="password" class="form-control" id="confirmarClave" name="confirmarClave" required />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+</form>

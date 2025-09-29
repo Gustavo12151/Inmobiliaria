@@ -170,7 +170,7 @@ public IActionResult CambiarClave(int id)
     var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
     if (!User.IsInRole("Administrador") && currentUserId != usuario.Id.ToString())
     {
-        return Forbid();
+        return Forbid(); // Acceso denegado
     }
 
     return View(usuario);
@@ -184,12 +184,14 @@ public IActionResult CambiarClave(int id, string claveActual, string nuevaClave,
     var usuario = repo.ObtenerPorId(id);
     if (usuario == null) return NotFound();
 
+    // Validación de que solo pueda cambiar su propia clave si no es admin
     var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
     if (!User.IsInRole("Administrador") && currentUserId != usuario.Id.ToString())
     {
         return Forbid();
     }
 
+    // Validaciones de nueva contraseña
     if (string.IsNullOrEmpty(nuevaClave) || string.IsNullOrEmpty(confirmarClave))
     {
         TempData["Error"] = "Debe ingresar y confirmar la nueva contraseña.";
@@ -202,6 +204,7 @@ public IActionResult CambiarClave(int id, string claveActual, string nuevaClave,
         return RedirectToAction("CambiarClave", new { id });
     }
 
+    // Verificar la clave actual
     bool claveValida = false;
     try
     {
@@ -225,12 +228,14 @@ public IActionResult CambiarClave(int id, string claveActual, string nuevaClave,
         return RedirectToAction("CambiarClave", new { id });
     }
 
-    // ✅ Guardar nueva clave cifrada
+    // Guardar la nueva clave
+    usuario.Clave = BCrypt.Net.BCrypt.HashPassword(nuevaClave);
     repo.CambiarClave(id, nuevaClave);
 
-    TempData["Mensaje"] = "Contraseña cambiada con éxito.";
+    TempData["Mensaje"] = "Contraseña modificada correctamente.";
     return RedirectToAction("Perfil", new { id });
 }
+
 
 
         // =========================
