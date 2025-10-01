@@ -243,25 +243,32 @@ public IActionResult FinalizarAnticipado(int id, bool pagarAhora)
 
     var usuario = repoUsuario.ObtenerPorUsuario(User.Identity!.Name!);
 
-    // 🔹 Calcular nuevamente la multa (porque no la trae desde la vista)
+    // 🔹 Recalcular multa
     double mesesTotales = ((contrato.FechaFin - contrato.FechaInicio).Days) / 30.0;
     double mesesCumplidos = ((DateTime.Today - contrato.FechaInicio).Days) / 30.0;
-    contrato.MultaCalculada = mesesCumplidos < mesesTotales / 2 
-        ? contrato.MontoMensual * 2 
+    contrato.MultaCalculada = mesesCumplidos < mesesTotales / 2
+        ? contrato.MontoMensual * 2
         : contrato.MontoMensual;
 
-    // 🔹 Guardar la finalización anticipada
+    // 🔹 Calcular deuda pendiente
+    int mesesRestantes = (int)Math.Ceiling(mesesTotales - mesesCumplidos);
+    decimal deuda = mesesRestantes * contrato.MontoMensual;
+
+    // 🔹 Calcular total (deuda + multa)
+    decimal total = deuda + (contrato.MultaCalculada ?? 0);
+
+    // 🔹 Guardar finalización anticipada
     repo.FinalizarAnticipado(id, DateTime.Today, usuario?.Id ?? 0);
 
     if (pagarAhora)
     {
-        // Registrar el pago con multa
+        // Registrar el pago con el TOTAL (deuda + multa)
         var pagoRepo = new RepositorioPago(_configuration);
         pagoRepo.Alta(new Pago
         {
             ContratoId = contrato.Id,
-            Importe = contrato.MultaCalculada ?? 0, // ahora sí tiene valor
-            Concepto = "Alquiler/Multa",            // 👈 agregar concepto
+            Importe = total, // 👈 ahora se guarda el importe correcto
+            Concepto = $"Finalización anticipada - Alquiler pendiente + Multa",
             FechaPago = DateTime.Today,
             UsuarioCreadorId = usuario?.Id ?? 0,
             Estado = "Pagado"

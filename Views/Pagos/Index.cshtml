@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = "Lista de Pagos";
     bool esAdmin = User.IsInRole("Administrador");
+    bool esEmpleado = User.IsInRole("Empleado");
 }
 
 <h2>Lista de Pagos</h2>
@@ -57,12 +58,21 @@
                 }
 
                 <td>
-                    <a asp-action="Details" asp-route-id="@pago.Id" class="btn btn-info btn-sm">Ver</a>
-
+                    @* Botón Ver solo para admin *@
                     @if (esAdmin)
                     {
+                        <a asp-action="Details" asp-route-id="@pago.Id" class="btn btn-info btn-sm">Ver</a>
                         <a asp-action="Edit" asp-route-id="@pago.Id" class="btn btn-warning btn-sm">Editar</a>
+                    }
+                    @* Empleado solo puede editar Concepto *@
+                    @if (esEmpleado)
+                    {
+                        <a asp-action="Edit" asp-route-id="@pago.Id" class="btn btn-warning btn-sm">Editar Concepto</a>
+                    }
 
+                    @* Anular: admin y empleado si quieres *@
+                    @if (esAdmin || esEmpleado)
+                    {
                         <form asp-action="Delete" asp-route-id="@pago.Id" method="post" class="d-inline">
                             <button type="submit" class="btn btn-danger btn-sm" 
                                     onclick="return confirm('¿Seguro que desea anular este pago?');">

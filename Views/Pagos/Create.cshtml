@@ -8,15 +8,15 @@
 <form asp-action="Create" method="post">
     <div class="mb-3">
         <label asp-for="ContratoId" class="form-label">Contrato</label>
-        <select asp-for="ContratoId" class="form-select" asp-items="ViewBag.Contratos">
-            <option value="">-- Seleccione contrato --</option>
-        </select>
+       <select asp-for="ContratoId" class="form-select" asp-items="ViewBag.Contratos">
+    <option value="">-- Seleccione contrato --</option>
+</select>
         <span asp-validation-for="ContratoId" class="text-danger"></span>
     </div>
 
     <div class="mb-3">
         <label asp-for="FechaPago" class="form-label">Fecha de Pago</label>
-        <input asp-for="FechaPago" class="form-control" type="date" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+        <input asp-for="FechaPago" class="form-control" type="date" />
         <span asp-validation-for="FechaPago" class="text-danger"></span>
     </div>
 

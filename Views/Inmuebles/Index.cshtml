@@ -17,7 +17,7 @@
 <div class="card mb-4">
     <div class="card-body">
 
-        @* Botón Nuevo Inmueble para todos los usuarios autenticados *@
+        @* Botón Nuevo Inmueble (solo autenticados) *@
         @if (User.Identity.IsAuthenticated)
         {
             <a asp-action="Create" class="btn btn-primary mb-3">Nuevo Inmueble</a>
@@ -59,7 +59,8 @@
             <th>Precio</th>
             <th>Propietario</th>
             <th>Tipo</th>
-            
+            <th>Estado</th>
+
             @if (esAdmin || esEmpleado)
             {
                 <th>Acciones</th>
@@ -77,11 +78,32 @@
                 <td>$@inmueble.Precio.ToString("N2")</td>
                 <td>@($"{inmueble.Propietario.Nombre} {inmueble.Propietario.Apellido}")</td>
                 <td>@inmueble.Tipo.Nombre</td>
-                
+                <td>
+                    @if (inmueble.Estado == "Disponible")
+                    {
+                        <span class="badge bg-success">Disponible</span>
+                    }
+                    else if (inmueble.Estado == "Indisponible")
+                    {
+                        <span class="badge bg-danger">Indisponible</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">@inmueble.Estado</span>
+                    }
+                </td>
+
                 @if (esAdmin || esEmpleado)
                 {
                     <td>
                         <a asp-action="Edit" asp-route-id="@inmueble.Id" class="btn btn-warning btn-sm">Editar</a>
+
+                        @* Botón para cambiar estado (empleado y admin) *@
+                        <a asp-action="CambiarEstado" asp-route-id="@inmueble.Id"
+                           class="btn btn-sm @(inmueble.Estado == "Disponible" ? "btn-outline-danger" : "btn-outline-success")">
+                            @(inmueble.Estado == "Disponible" ? "Marcar Indisponible" : "Marcar Disponible")
+                        </a>
+
                         @if (esAdmin)
                         {
                             <a asp-action="Delete" asp-route-id="@inmueble.Id" class="btn btn-danger btn-sm">Eliminar</a>

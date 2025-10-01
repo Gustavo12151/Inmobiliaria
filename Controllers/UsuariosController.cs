@@ -116,6 +116,7 @@ namespace Inmobiliaria.Controllers
             // 🔄 refrescar claims
             var claims = new List<Claim>
             {
+                  new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
                 new Claim(ClaimTypes.Name, usuario.NombreUsuario ?? ""),
                 new Claim(ClaimTypes.Role, usuario.Rol ?? "Empleado"),
                 new Claim("Avatar", usuario.Avatar ?? "")

@@ -1,12 +1,14 @@
 @model Inmobiliaria.Models.Propietario
 
-<h2>Eliminar Propietario</h2>
-<p>¿Seguro que deseas eliminar este propietario?</p>
+<h2>¿Está seguro de que desea eliminar este propietario?</h2>
+
 <div>
-    <p><strong>@Model.Nombre @Model.Apellido</strong> (DNI: @Model.DNI)</p>
+    <h4>@Model.Nombre @Model.Apellido</h4>
+    <p><strong>DNI:</strong> @Model.DNI</p>
+    <p><strong>Contacto:</strong> @Model.Contacto</p>
 </div>
 
-<form asp-action="DeleteConfirmed" method="post">
+<form asp-action="Delete" method="post">
     <input type="hidden" asp-for="Id" />
     <button type="submit" class="btn btn-danger">Eliminar</button>
     <a asp-action="Index" class="btn btn-secondary">Cancelar</a>

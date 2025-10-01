@@ -68,16 +68,17 @@ namespace Inmobiliaria.Models
                                     }
                                     : null,
                                 Inmueble = new Inmueble
-                                {
-                                    Id = reader.GetInt32("InmuebleId"),
-                                    Direccion = reader.GetString("InmuebleDireccion")
-                                },
-                                Inquilino = new Inquilino
-                                {
-                                    Id = reader.GetInt32("InquilinoId"),
-                                    Nombre = reader.GetString("InquilinoNombre"),
-                                    Apellido = reader.GetString("InquilinoApellido")
-                                }
+{
+    Id = reader.GetInt32("InmuebleId"),
+    Direccion = reader["InmuebleDireccion"] != DBNull.Value ? reader.GetString("InmuebleDireccion") : "Sin Info"
+},
+Inquilino = new Inquilino
+{
+    Id = reader.GetInt32("InquilinoId"),
+    Nombre = reader["InquilinoNombre"] != DBNull.Value ? reader.GetString("InquilinoNombre") : "Sin Info",
+    Apellido = reader["InquilinoApellido"] != DBNull.Value ? reader.GetString("InquilinoApellido") : ""
+}
+
                             };
 
                             lista.Add(contrato);
@@ -288,70 +289,100 @@ namespace Inmobiliaria.Models
         // =========================
         // LÓGICA ADICIONAL
         // =========================
-        private bool HaySuperposicion(int inmuebleId, DateTime inicio, DateTime fin, int idExcluido = 0)
+       private bool HaySuperposicion(int inmuebleId, DateTime inicio, DateTime fin, int idExcluido = 0)
+{
+    using var connection = GetConnection();
+    string sql = @"
+        SELECT COUNT(*) FROM Contratos
+        WHERE InmuebleId = @inmuebleId
+          AND EstadoContrato = 'Vigente'  -- 🔹 solo contratos vigentes
+          AND NOT (@fin < FechaInicio OR @inicio > FechaFin)  -- 🔹 se superponen fechas
+    ";
+
+    if (idExcluido > 0)
+        sql += " AND Id <> @idExcluido";  // 🔹 excluir contrato actual al modificar
+
+    using var command = new MySqlCommand(sql, connection);
+    command.Parameters.AddWithValue("@inmuebleId", inmuebleId);
+    command.Parameters.AddWithValue("@inicio", inicio);
+    command.Parameters.AddWithValue("@fin", fin);
+
+    if (idExcluido > 0)
+        command.Parameters.AddWithValue("@idExcluido", idExcluido);
+
+    connection.Open();
+    int count = Convert.ToInt32(command.ExecuteScalar());
+
+    return count > 0;  // 🔹 true si hay superposición
+}
+
+/*/////////////////////////////////////////////////////////////////////////////*/
+
+      public List<Contrato> ObtenerVigentes()
+{
+    var lista = new List<Contrato>();
+    using (var connection = GetConnection())
+    {
+        string sql = @"
+            SELECT c.Id, c.InmuebleId, c.InquilinoId, c.UsuarioCreadorId, 
+                   c.UsuarioFinalizadorId, c.FechaInicio, c.FechaFin, 
+                   c.FechaTerminacionAnticipada, c.MontoMensual, 
+                   c.MultaCalculada, c.EstadoContrato,
+                   i.Direccion AS InmuebleDireccion,
+                   inq.Nombre AS InquilinoNombre,
+                   inq.Apellido AS InquilinoApellido
+            FROM Contratos c
+            INNER JOIN Inmuebles i ON c.InmuebleId = i.Id
+            INNER JOIN Inquilinos inq ON c.InquilinoId = inq.Id
+            WHERE c.EstadoContrato = 'Vigente';";
+
+        using (var command = new MySqlCommand(sql, connection))
         {
-            using var connection = GetConnection();
-            string sql = @"
-                SELECT COUNT(*) FROM Contratos
-                WHERE InmuebleId=@inmuebleId
-                  AND NOT (@fin < FechaInicio OR @inicio > FechaFin)
-            ";
-
-            if (idExcluido > 0)
-                sql += " AND Id <> @idExcluido";
-
-            using var command = new MySqlCommand(sql, connection);
-            command.Parameters.AddWithValue("@inmuebleId", inmuebleId);
-            command.Parameters.AddWithValue("@inicio", inicio);
-            command.Parameters.AddWithValue("@fin", fin);
-
-            if (idExcluido > 0)
-                command.Parameters.AddWithValue("@idExcluido", idExcluido);
-
             connection.Open();
-            return Convert.ToInt32(command.ExecuteScalar()) > 0;
-        }
-
-
-        public List<Contrato> ObtenerVigentes()
-        {
-            var lista = new List<Contrato>();
-            using (var connection = GetConnection())
+            using (var reader = command.ExecuteReader())
             {
-                string sql = "SELECT * FROM Contratos WHERE EstadoContrato='Vigente'";
-                using (var command = new MySqlCommand(sql, connection))
+                while (reader.Read())
                 {
-                    connection.Open();
-                    using (var reader = command.ExecuteReader())
+                    var contrato = new Contrato
                     {
-                        while (reader.Read())
+                        Id = reader.GetInt32("Id"),
+                        InmuebleId = reader.GetInt32("InmuebleId"),
+                        InquilinoId = reader.GetInt32("InquilinoId"),
+                        UsuarioCreadorId = reader.GetInt32("UsuarioCreadorId"),
+                        UsuarioFinalizadorId = reader.IsDBNull(reader.GetOrdinal("UsuarioFinalizadorId"))
+                            ? (int?)null
+                            : reader.GetInt32("UsuarioFinalizadorId"),
+                        FechaInicio = reader.GetDateTime("FechaInicio"),
+                        FechaFin = reader.GetDateTime("FechaFin"),
+                        FechaTerminacionAnticipada = reader.IsDBNull(reader.GetOrdinal("FechaTerminacionAnticipada"))
+                            ? (DateTime?)null
+                            : reader.GetDateTime("FechaTerminacionAnticipada"),
+                        MontoMensual = reader.GetDecimal("MontoMensual"),
+                        MultaCalculada = reader.IsDBNull(reader.GetOrdinal("MultaCalculada"))
+                            ? (decimal?)null
+                            : reader.GetDecimal("MultaCalculada"),
+                        EstadoContrato = reader.GetString("EstadoContrato"),
+
+                        Inmueble = new Inmueble
                         {
-                            lista.Add(new Contrato
-                            {
-                                Id = reader.GetInt32("Id"),
-                                InmuebleId = reader.GetInt32("InmuebleId"),
-                                InquilinoId = reader.GetInt32("InquilinoId"),
-                                UsuarioCreadorId = reader.GetInt32("UsuarioCreadorId"),
-                                UsuarioFinalizadorId = reader.IsDBNull(reader.GetOrdinal("UsuarioFinalizadorId"))
-                                                        ? (int?)null
-                                                        : reader.GetInt32("UsuarioFinalizadorId"),
-                                FechaInicio = reader.GetDateTime("FechaInicio"),
-                                FechaFin = reader.GetDateTime("FechaFin"),
-                                FechaTerminacionAnticipada = reader.IsDBNull(reader.GetOrdinal("FechaTerminacionAnticipada"))
-                                                             ? (DateTime?)null
-                                                             : reader.GetDateTime("FechaTerminacionAnticipada"),
-                                MontoMensual = reader.GetDecimal("MontoMensual"),
-                                MultaCalculada = reader.IsDBNull(reader.GetOrdinal("MultaCalculada"))
-                                                 ? (decimal?)null
-                                                 : reader.GetDecimal("MultaCalculada"),
-                                EstadoContrato = reader.GetString("EstadoContrato")
-                            });
+                            Id = reader.GetInt32("InmuebleId"),
+                            Direccion = reader.GetString("InmuebleDireccion")
+                        },
+                        Inquilino = new Inquilino
+                        {
+                            Id = reader.GetInt32("InquilinoId"),
+                            Nombre = reader.GetString("InquilinoNombre"),
+                            Apellido = reader.GetString("InquilinoApellido")
                         }
-                    }
+                    };
+                    lista.Add(contrato);
                 }
             }
-            return lista;
         }
+    }
+    return lista;
+}
+
 
         public int FinalizarAnticipado(int idContrato, DateTime fechaTerminacion, int usuarioId)
         {

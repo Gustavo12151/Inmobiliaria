@@ -5,7 +5,6 @@ using Inmobiliaria.Models;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
-
 namespace Inmobiliaria.Controllers
 {
     [Authorize]
@@ -17,17 +16,16 @@ namespace Inmobiliaria.Controllers
 
         public PagosController(IConfiguration configuration)
         {
-            // Usar el IConfiguration que te provee el framework
             repoPago = new RepositorioPago(configuration);
             repoContrato = new RepositorioContrato(configuration);
             repoUsuario = new RepositorioUsuario(configuration);
         }
 
-        // INDEX: muestra todos o por contrato si se pasa contratoId
+        // INDEX
         public IActionResult Index(int? contratoId)
         {
             var lista = contratoId.HasValue
-                ? repoPago.ObtenerTodosPorContrato(contratoId.Value)   // requiere implementar en el repo
+                ? repoPago.ObtenerTodosPorContrato(contratoId.Value)
                 : repoPago.ObtenerTodos();
 
             ViewBag.Contrato = contratoId.HasValue ? repoContrato.ObtenerPorId(contratoId.Value) : null;
@@ -43,54 +41,60 @@ namespace Inmobiliaria.Controllers
 
         // CREATE
         [Authorize(Roles = "Administrador,Empleado")]
-public IActionResult Create()
-{
-    // Obtener solo contratos vigentes
-    var contratosVigentes = repoContrato.ObtenerVigentes();
+        public IActionResult Create()
+        {
+            var contratosVigentes = repoContrato.ObtenerVigentes();
 
-    // Crear SelectList para la vista
-    ViewBag.Contratos = new SelectList(
-        contratosVigentes, 
-        "Id",       // valor de la opción
-        "Id"        // texto que se muestra, puedes poner otra propiedad como "Numero" o "Inquilino.Nombre"
-    );
+            // Armamos la lista para el select
+            var contratosParaSelect = contratosVigentes.Select(c => new
+            {
+                Id = c.Id,
+                Descripcion = $"Contrato {c.Id} - Inmueble: {c.Inmueble?.Direccion ?? "Sin info"} - " +
+                              $"Inquilino: {c.Inquilino?.Nombre ?? "Sin info"} {c.Inquilino?.Apellido ?? ""} - " +
+                              $"{c.FechaInicio:dd/MM/yyyy} a {c.FechaFin:dd/MM/yyyy}"
+            }).ToList();
 
-    return View(new Pago());
-}
+            ViewBag.Contratos = new SelectList(contratosParaSelect, "Id", "Descripcion");
 
-[HttpPost]
-[ValidateAntiForgeryToken]
-[Authorize(Roles = "Administrador,Empleado")]
-public IActionResult Create(Pago pago)
-{
-    if (!ModelState.IsValid)
-    {
-        // Volver a llenar la lista si hay error
-        var contratosVigentes = repoContrato.ObtenerVigentes();
-        ViewBag.Contratos = new SelectList(contratosVigentes, "Id", "Id", pago.ContratoId);
-        return View(pago);
-    }
+            return View(new Pago());
+        }
 
-    var usuario = repoUsuario.ObtenerPorUsuario(User.Identity!.Name!);
-    if (usuario == null)
-    {
-        ModelState.AddModelError("", "No se pudo determinar el usuario actual.");
-        var contratosVigentes = repoContrato.ObtenerVigentes();
-        ViewBag.Contratos = new SelectList(contratosVigentes, "Id", "Id", pago.ContratoId);
-        return View(pago);
-    }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrador,Empleado")]
+        public IActionResult Create(Pago pago)
+        {
+            if (!ModelState.IsValid)
+            {
+                var contratosVigentes = repoContrato.ObtenerVigentes();
+                var contratosParaSelect = contratosVigentes.Select(c => new
+                {
+                    Id = c.Id,
+                    Descripcion = $"Contrato {c.Id} - Inmueble: {c.Inmueble?.Direccion ?? "Sin info"} - " +
+                                  $"Inquilino: {c.Inquilino?.Nombre ?? "Sin info"} {c.Inquilino?.Apellido ?? ""} - " +
+                                  $"{c.FechaInicio:dd/MM/yyyy} a {c.FechaFin:dd/MM/yyyy}"
+                }).ToList();
 
-    pago.UsuarioCreadorId = usuario.Id;
-    pago.FechaPago = DateTime.Now;
-    repoPago.Alta(pago); // el repo calcula NumeroPago automáticamente
+                ViewBag.Contratos = new SelectList(contratosParaSelect, "Id", "Descripcion", pago.ContratoId);
+                return View(pago);
+            }
 
-    TempData["Mensaje"] = "Pago registrado correctamente.";
-    return RedirectToAction(nameof(Index), new { contratoId = pago.ContratoId });
-}
+            var usuario = repoUsuario.ObtenerPorUsuario(User.Identity!.Name!);
+            if (usuario == null)
+            {
+                ModelState.AddModelError("", "No se pudo determinar el usuario actual.");
+                return View(pago);
+            }
 
+            pago.UsuarioCreadorId = usuario.Id;
+            pago.FechaPago = DateTime.Now;
+            repoPago.Alta(pago);
 
+            TempData["Mensaje"] = "Pago registrado correctamente.";
+            return RedirectToAction(nameof(Index), new { contratoId = pago.ContratoId });
+        }
 
-        // EDIT (solo Admin y Empleado)
+        // EDIT
         [Authorize(Roles = "Administrador,Empleado")]
         public IActionResult Edit(int id)
         {
@@ -107,18 +111,18 @@ public IActionResult Create(Pago pago)
             if (id != pago.Id) return NotFound();
             if (!ModelState.IsValid) return View(pago);
 
-            var original = repoPago.ObtenerPorId(id);
-            if (original == null || original.Estado == "Anulado") return NotFound();
+            var pagoOriginal = repoPago.ObtenerPorId(id);
+            if (pagoOriginal == null || pagoOriginal.Estado == "Anulado") return NotFound();
 
-            // SOLO modificar Concepto
-            original.Concepto = pago.Concepto;
-            repoPago.Modificacion(original);
+            // Solo se puede modificar el concepto
+            pagoOriginal.Concepto = pago.Concepto;
+            repoPago.Modificacion(pagoOriginal);
 
-            TempData["Mensaje"] = "Pago modificado correctamente.";
-            return RedirectToAction(nameof(Index), new { contratoId = original.ContratoId });
+            TempData["Mensaje"] = "Concepto modificado correctamente.";
+            return RedirectToAction(nameof(Index), new { contratoId = pagoOriginal.ContratoId });
         }
 
-        // DELETE (solo Admin puede anular)
+        // DELETE
         [Authorize(Roles = "Administrador")]
         public IActionResult Delete(int id)
         {
@@ -132,8 +136,16 @@ public IActionResult Create(Pago pago)
         [Authorize(Roles = "Administrador")]
         public IActionResult DeleteConfirmed(int id)
         {
-            int usuarioId = int.Parse(User.Claims.First(c => c.Type == "Id").Value);
-            repoPago.Anular(id, usuarioId);
+            var usuario = repoUsuario.ObtenerPorUsuario(User.Identity!.Name!);
+            if (usuario == null)
+            {
+                TempData["Error"] = "No se pudo determinar el usuario logueado.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            repoPago.Anular(id, usuario.Id);
+            TempData["Mensaje"] = "Pago anulado correctamente.";
+
             var pago = repoPago.ObtenerPorId(id);
             return RedirectToAction(nameof(Index), new { contratoId = pago?.ContratoId });
         }

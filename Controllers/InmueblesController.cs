@@ -48,7 +48,7 @@ namespace Inmobiliaria.Controllers
         }
 
         // Detalle de un inmueble
-        
+
         public IActionResult Details(int id)
         {
             var inmueble = repo.ObtenerPorId(id);
@@ -64,7 +64,7 @@ namespace Inmobiliaria.Controllers
         public IActionResult Create()
         {
             ViewBag.Propietarios = new SelectList(repo.ObtenerPropietarios(), "Id", "NombreCompleto"); // Id y NombreCompleto
-    ViewBag.Tipos = new SelectList(repo.ObtenerTipos(), "Id", "Nombre");
+            ViewBag.Tipos = new SelectList(repo.ObtenerTipos(), "Id", "Nombre");
             return View();
         }
 
@@ -86,40 +86,40 @@ namespace Inmobiliaria.Controllers
         // MÉTODOS DE EDICIÓN (UPDATE)
         // ======================================
 
-       [Authorize]
-public IActionResult Edit(int id)
-{
-    var inmueble = repo.ObtenerPorId(id);
-    if (inmueble == null) return NotFound();
+        [Authorize]
+        public IActionResult Edit(int id)
+        {
+            var inmueble = repo.ObtenerPorId(id);
+            if (inmueble == null) return NotFound();
 
-    
-    ViewBag.Propietarios = new SelectList(repo.ObtenerPropietarios(), "Id", "NombreCompleto");
-    ViewBag.Tipos = new SelectList(repo.ObtenerTipos(), "Id", "Nombre");
 
-    return View(inmueble);
-}
+            ViewBag.Propietarios = new SelectList(repo.ObtenerPropietarios(), "Id", "NombreCompleto");
+            ViewBag.Tipos = new SelectList(repo.ObtenerTipos(), "Id", "Nombre");
 
-[HttpPost]
-[ValidateAntiForgeryToken]
-[Authorize]
-public IActionResult Edit(int id, Inmueble inmueble)
-{
-    if (id != inmueble.Id) return NotFound();
+            return View(inmueble);
+        }
 
-    if (ModelState.IsValid)
-    {
-        inmueble.Id = id;
-        repo.Modificacion(inmueble);
-        TempData["Mensaje"] = "Inmueble modificado correctamente.";
-        return RedirectToAction(nameof(Index));
-    }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize]
+        public IActionResult Edit(int id, Inmueble inmueble)
+        {
+            if (id != inmueble.Id) return NotFound();
 
-    
-    ViewBag.Propietarios = new SelectList(repo.ObtenerPropietarios(), "Id", "NombreCompleto", inmueble.IdPropietario);
-    ViewBag.Tipos = new SelectList(repo.ObtenerTipos(), "Id", "Nombre", inmueble.IdTipo);
+            if (ModelState.IsValid)
+            {
+                inmueble.Id = id;
+                repo.Modificacion(inmueble);
+                TempData["Mensaje"] = "Inmueble modificado correctamente.";
+                return RedirectToAction(nameof(Index));
+            }
 
-    return View(inmueble);
-}
+
+            ViewBag.Propietarios = new SelectList(repo.ObtenerPropietarios(), "Id", "NombreCompleto", inmueble.IdPropietario);
+            ViewBag.Tipos = new SelectList(repo.ObtenerTipos(), "Id", "Nombre", inmueble.IdTipo);
+
+            return View(inmueble);
+        }
 
 
         // ======================================
@@ -143,5 +143,21 @@ public IActionResult Edit(int id, Inmueble inmueble)
             TempData["Mensaje"] = "Inmueble eliminado correctamente.";
             return RedirectToAction(nameof(Index));
         }
+
+[Authorize(Roles = "Administrador,Empleado")]
+public IActionResult CambiarEstado(int id)
+{
+    var inmueble = repo.ObtenerPorId(id);
+    if (inmueble == null) return NotFound();
+
+    // Toggle del estado
+    string nuevoEstado = inmueble.Estado == "Disponible" ? "Indisponible" : "Disponible";
+    repo.CambiarEstado(id, nuevoEstado);
+
+    TempData["Mensaje"] = $"El inmueble {inmueble.Direccion} ahora está marcado como {nuevoEstado}.";
+    return RedirectToAction(nameof(Index));
+}
+
+
     }
 }
