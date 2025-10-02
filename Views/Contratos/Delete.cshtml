@@ -16,12 +16,23 @@
 else
 {
     <div class="alert alert-warning">
-        ¿Está seguro que desea eliminar este contrato?
+        ¿Está seguro que desea eliminar este contrato? Esto solo lo ocultará de la lista, no se borrará de la base de datos.
     </div>
 
     <table class="table table-bordered">
         <tr><th>Inquilino</th><td>@Model.Inquilino?.Nombre @Model.Inquilino?.Apellido</td></tr>
         <tr><th>Inmueble</th><td>@Model.Inmueble?.Direccion</td></tr>
+        <tr><th>Usuario Creador</th><td>@Model.UsuarioCreador?.NombreUsuario</td></tr>
+        <tr><th>Usuario Finalizador</th><td>
+            @if (Model.UsuarioFinalizador != null)
+            {
+                @Model.UsuarioFinalizador.NombreUsuario
+            }
+            else
+            {
+                <span class="text-muted">No finalizado</span>
+            }
+        </td></tr>
         <tr><th>Fecha Inicio</th><td>@Model.FechaInicio.ToString("yyyy-MM-dd")</td></tr>
         <tr><th>Fecha Fin</th><td>@Model.FechaFin.ToString("yyyy-MM-dd")</td></tr>
         <tr><th>Monto Mensual</th><td>$ @Model.MontoMensual.ToString("N2")</td></tr>
@@ -46,7 +57,7 @@ else
         </tr>
     </table>
 
-    <form asp-action="DeleteConfirmed" method="post">
+    <form asp-action="Delete" method="post">
         <input type="hidden" asp-for="Id" />
         <button type="submit" class="btn btn-danger">Eliminar</button>
         <a asp-action="Index" class="btn btn-secondary">Cancelar</a>

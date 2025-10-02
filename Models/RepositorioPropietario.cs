@@ -11,7 +11,7 @@ namespace Inmobiliaria.Models
             var lista = new List<Propietario>();
             using (var connection = GetConnection())
             {
-                string sql = "SELECT Id, DNI, Nombre, Apellido, Contacto FROM Propietarios";
+                string sql = "SELECT Id, DNI, Nombre, Apellido, Contacto, Estado FROM Propietarios";
                 using (var command = new MySqlCommand(sql, connection))
                 {
                     connection.Open();
@@ -24,7 +24,8 @@ namespace Inmobiliaria.Models
                             DNI = reader.GetString("DNI"),
                             Nombre = reader.GetString("Nombre"),
                             Apellido = reader.GetString("Apellido"),
-                            Contacto = reader.GetString("Contacto")
+                            Contacto = reader.GetString("Contacto"),
+                            Estado = reader.GetString("Estado")
                         });
                     }
                 }
@@ -106,7 +107,10 @@ namespace Inmobiliaria.Models
             int res = -1;
             using (var connection = GetConnection())
             {
-                string sql = "DELETE FROM Propietarios WHERE Id = @id";
+                string sql = @"
+            UPDATE Propietarios SET Estado='Inactivo' WHERE Id=@id;
+            UPDATE Inmuebles SET Estado='Indisponible' WHERE PropietarioId=@id;";
+
                 using (var command = new MySqlCommand(sql, connection))
                 {
                     command.Parameters.AddWithValue("@id", id);
@@ -116,6 +120,23 @@ namespace Inmobiliaria.Models
             }
             return res;
         }
+
+public void CambiarEstado(int id, string nuevoEstado)
+{
+    using (var connection = GetConnection())
+    {
+        string sql = "UPDATE Propietarios SET Estado=@estado WHERE Id=@id";
+        using (var command = new MySqlCommand(sql, connection))
+        {
+            command.Parameters.AddWithValue("@estado", nuevoEstado);
+            command.Parameters.AddWithValue("@id", id);
+            connection.Open();
+            command.ExecuteNonQuery();
+        }
+    }
+}
+
+
         /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
     }
 }

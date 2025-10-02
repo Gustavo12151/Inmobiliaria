@@ -1,6 +1,6 @@
 ﻿@using System.Security.Claims
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -13,7 +13,60 @@
         <nav class="navbar navbar-expand-sm navbar-light bg-light border-bottom mb-3">
             <div class="container-fluid">
                 <a class="navbar-brand" asp-controller="Home" asp-action="Index">Inmobiliaria</a>
-                <div class="collapse navbar-collapse">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Menú">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="mainNav">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        @if (User.Identity != null && User.Identity.IsAuthenticated)
+                        {
+                            <!-- Usuarios: solo administrador -->
+                            @if (User.IsInRole("Administrador"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Usuarios" asp-action="Index">Usuarios</a>
+                                </li>
+                            }
+
+                            <!-- Propietarios: Admin (gestiona) y Empleado (solo lectura) -->
+                            @if (User.IsInRole("Administrador") || User.IsInRole("Empleado"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Propietarios" asp-action="Index">Propietarios</a>
+                                </li>
+                            }
+
+                            <!-- Tipos de Inmuebles: Admin y Empleado -->
+                            @if (User.IsInRole("Administrador") || User.IsInRole("Empleado"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="TiposInmuebles" asp-action="Index">Tipos de Inmuebles</a>
+                                </li>
+                            }
+
+                            <!-- Inquilinos -->
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Inquilinos" asp-action="Index">Inquilinos</a>
+                            </li>
+
+                            <!-- Inmuebles -->
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Inmuebles" asp-action="Index">Inmuebles</a>
+                            </li>
+
+                            <!-- Contratos -->
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Contratos" asp-action="Index">Contratos</a>
+                            </li>
+
+                            <!-- Pagos -->
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Pagos" asp-action="Index">Pagos</a>
+                            </li>
+                        }
+                    </ul>
+
+                    <!-- Perfil y Logout -->
                     <ul class="navbar-nav ms-auto">
                         @if (User.Identity != null && User.Identity.IsAuthenticated)
                         {
@@ -60,6 +113,6 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-     @RenderSection("Scripts", required: false)
+    @RenderSection("Scripts", required: false)
 </body>
 </html>

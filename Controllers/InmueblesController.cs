@@ -150,6 +150,14 @@ public IActionResult CambiarEstado(int id)
     var inmueble = repo.ObtenerPorId(id);
     if (inmueble == null) return NotFound();
 
+    // Validar propietario activo
+    bool propietarioActivo = inmueble.Propietario != null && inmueble.Propietario.Estado == "Activo";
+    if (!propietarioActivo && inmueble.Estado == "Indisponible")
+    {
+        TempData["Error"] = "No se puede marcar como disponible un inmueble cuyo propietario está inactivo.";
+        return RedirectToAction(nameof(Index));
+    }
+
     // Toggle del estado
     string nuevoEstado = inmueble.Estado == "Disponible" ? "Indisponible" : "Disponible";
     repo.CambiarEstado(id, nuevoEstado);

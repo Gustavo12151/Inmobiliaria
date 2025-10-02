@@ -8,6 +8,8 @@ namespace Inmobiliaria.Models
         public string? Apellido { get; set; }
         public string? Contacto { get; set; }
 
+        public string Estado { get; set; } = "Activo";
+
            // Propiedad calculada para mostrar en dropdowns
         public string NombreCompleto => $"{Nombre} {Apellido}";
     }

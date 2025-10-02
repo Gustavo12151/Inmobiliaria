@@ -21,16 +21,18 @@ public class Contrato
     public Inquilino? Inquilino { get; set; }
     public Usuario? UsuarioCreador { get; set; }
     public Usuario? UsuarioFinalizador { get; set; }
+    
+     public string Eliminado { get; set; } = "No";
 
     // <-- Agregar esta propiedad
-    public string DescripcionContrato
-    {
-        get
+        public string DescripcionContrato
         {
-            return $"Contrato {Id} - Inmueble: {Inmueble?.Direccion ?? "Sin info"} - " +
-                   $"Inquilino: {Inquilino?.Nombre ?? "Sin info"} - " +
-                   $"{FechaInicio:dd/MM/yyyy} a {FechaFin:dd/MM/yyyy}";
+            get
+            {
+                return $"Contrato {Id} - Inmueble: {Inmueble?.Direccion ?? "Sin info"} - " +
+                       $"Inquilino: {Inquilino?.Nombre ?? "Sin info"} - " +
+                       $"{FechaInicio:dd/MM/yyyy} a {FechaFin:dd/MM/yyyy}";
+            }
         }
-    }
 }
 }
